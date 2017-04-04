@@ -1,0 +1,31 @@
+OASISFormat:  0.4
+OCamlVersion: >= 4.02.3
+Name:         ocaml-addressmapper
+Version:      0.1
+Maintainers:  Markus Rudy
+Homepage:     https://github.com/burgerdev/ocaml-addressmapper
+Synopsis:     A postfix address mapping service
+Authors:      markus@rudymentaer.de
+License:      GPL-3
+Plugins:      META (0.4), DevFiles (0.4)
+AlphaFeatures: ocamlbuild_more_args
+BuildTools: ocamlbuild
+
+Library "mapper"
+  Path: src
+  Modules: Mapper
+  BuildDepends: lwt, unix, lwt.unix, cohttp, cohttp.lwt, tls
+
+Executable "test_mapper"
+  Path: test
+  MainIs: test_mapper.ml
+  Build$: flag(tests)
+  CompiledObject: best
+  Install: false
+  BuildDepends: mapper, lwt, unix, lwt.unix, cohttp, cohttp.lwt, ounit
+
+Test "test_mapper"
+  Run$: flag(tests)
+  TestTools: test_mapper
+  Command: $test_mapper
+  WorkingDirectory: test
