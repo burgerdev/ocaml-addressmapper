@@ -5,4 +5,5 @@ PKG lwt lwt.unix
 PKG cohttp cohttp.lwt
 PKG nocrypto x509 tls
 PKG ounit
+PKG cmdliner
 FLG -w +a-4-40..42-44-45-48

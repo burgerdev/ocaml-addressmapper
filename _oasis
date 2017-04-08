@@ -14,7 +14,6 @@ BuildTools: ocamlbuild
 Library "mapper"
   Path: src
   Modules: Mapper
-  BuildDepends: lwt, unix, lwt.unix, cohttp, cohttp.lwt, tls
 
 Executable "test_mapper"
   Path: test
@@ -22,10 +21,16 @@ Executable "test_mapper"
   Build$: flag(tests)
   CompiledObject: best
   Install: false
-  BuildDepends: mapper, lwt, unix, lwt.unix, cohttp, cohttp.lwt, ounit
+  BuildDepends: mapper, ounit
 
 Test "test_mapper"
   Run$: flag(tests)
   TestTools: test_mapper
   Command: $test_mapper
   WorkingDirectory: test
+
+Executable "address-mapping-server"
+  Path: src
+  MainIs: main.ml
+  CompiledObject: best
+  BuildDepends: mapper, cmdliner, unix
