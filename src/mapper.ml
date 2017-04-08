@@ -1,12 +1,10 @@
 
 type leaf = string -> string option
 
-type mapping =
-  | And of mapping * mapping
-  | Or of mapping * mapping
+type t =
+  | And of t * t
+  | Or of t * t
   | Leaf of leaf
-
-type t = mapping
 
 let all a b = And(a, b)
 let any a b = Or(a, b)
