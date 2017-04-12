@@ -6,9 +6,13 @@ let bin_version = "0.1"
 
 let logc = out_channel_of_descr stderr
 
-let extract_rules f =
-  (* TODO *)
-  Mapper.accept
+let extract_rules filename_opt =
+  match filename_opt with
+  | None -> Mapper.accept
+  | Some filename ->
+    let ic = open_in filename in
+    let s = Sexplib.Sexp.input_sexp ic in
+    Mapper.t_of_sexp s
 
 let parse_email s =
   try
@@ -52,10 +56,14 @@ let handler rules ic oc =
       Malformed in
   output_string oc (message_of_status s)
 
+let start_server rules local_addr =
+  establish_server (handler rules) local_addr
+
 let main host port rules_file =
-  Printf.printf "Establishing connection at %s:%d.\n" host port;
+  Printf.fprintf logc "Establishing connection at %s:%d.\n" host port;
   let local_addr = Unix.ADDR_INET(Unix.inet_addr_of_string "127.0.0.1", port) in
-  establish_server (handler (extract_rules rules_file)) local_addr
+  let rules = extract_rules rules_file in
+  start_server rules local_addr
 
 
 (* Cmdliner stuff *)
