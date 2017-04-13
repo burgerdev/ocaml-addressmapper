@@ -33,7 +33,7 @@ let message_of_status s =
   | Not_found -> "500 not-found\n"
   | Found s -> Format.sprintf "200 %s\n" s
 
-let handler rules ic oc =
+let handler rules_getter ic oc =
   let s =
     try
       let input = input_line ic in
@@ -43,7 +43,7 @@ let handler rules ic oc =
         Printf.fprintf logc "Error: malformed request [%s]\n" input;
         Malformed
       | Some a ->
-        match Mapper.traverse a rules with
+        match Mapper.traverse a (rules_getter ()) with
         | Some b ->
           Printf.fprintf logc "Info: found mapping of [%s] to [%s].\n" a b;
           Found b
@@ -56,14 +56,17 @@ let handler rules ic oc =
       Malformed in
   output_string oc (message_of_status s)
 
-let start_server rules local_addr =
-  establish_server (handler rules) local_addr
-
-let main host port rules_file =
+let main host port rules_file update_rules =
+  let rules_getter =
+    if update_rules then
+      let f () = extract_rules rules_file in f
+    else
+      let rules = extract_rules rules_file in
+      let f () = rules in f
+  in
   Printf.fprintf logc "Establishing server at %s:%d.\n" host port; flush logc;
   let local_addr = Unix.ADDR_INET(Unix.inet_addr_of_string "127.0.0.1", port) in
-  let rules = extract_rules rules_file in
-  start_server rules local_addr
+  establish_server (handler rules_getter) local_addr
 
 
 (* Cmdliner stuff *)
@@ -80,7 +83,11 @@ let rules_term =
   let doc = "File containing mapping rules [NOT IMPLEMENTED]." in
   Arg.(value & opt (some string) None & info ["r"; "rules"] ~docv:"RULES-FILE" ~doc)
 
-let main_term = Term.(const main $ host_term $ port_term $ rules_term)
+let update_rules_term =
+  let doc = "Read rules file for every request." in
+  Arg.(value & flag & info ["u"; "update"] ~doc)
+
+let main_term = Term.(const main $ host_term $ port_term $ rules_term $ update_rules_term)
 
 let info =
   let doc = "Run a configurable address mapping server for postfix." in
