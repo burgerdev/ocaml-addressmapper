@@ -30,8 +30,13 @@ let test_replace _ =
   assert_equal (traverse test_string (replace "^test$" replacement)) (Some(replacement));
   assert_equal (traverse test_string (replace ".*" replacement)) (Some(replacement))
 
+let test_case _ =
+  let a, biga = "a", "A" in
+  assert_equal (traverse a upper) (Some(biga));
+  assert_equal (traverse biga lower) (Some(a))
+
 let test_sexp _ =
-  let a = all [(first [matches "a"; reject]); accept; replace "a" "b"] in
+  let a = all [(first [matches "a"; reject]); accept; replace "a" "b"; lower; upper] in
   let s = sexp_of_t a in
   let b = t_of_sexp s in
   assert_equal a b
@@ -45,6 +50,7 @@ let test_sexp_string _ =
 let suite =
   "mapper suite" >::: ["test_all" >:: test_all;
                        "test_first" >:: test_first;
+                       "test_case" >:: test_case;
                        "test_sexp" >:: test_sexp;
                        "test_sexp_string" >:: test_sexp_string;
                        "test_matches" >:: test_matches;

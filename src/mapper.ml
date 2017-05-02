@@ -1,9 +1,11 @@
 
 open Sexplib
 
-type leaf = (* TODO regexify *)
+type leaf =
   | Matches of string
   | Replace of string * string
+  | Lower
+  | Upper
   | Accept
   | Reject
 
@@ -18,11 +20,15 @@ let matches s = Leaf (Matches s)
 let replace s1 s2 = Leaf (Replace (s1, s2))
 let accept = Leaf (Accept)
 let reject = Leaf (Reject)
+let lower = Leaf (Lower)
+let upper = Leaf (Upper)
 
 let rec traverse s tree =
   match tree with
   | Leaf (Accept) -> Some s
   | Leaf (Reject) -> None
+  | Leaf (Lower) -> Some (String.lowercase_ascii s)
+  | Leaf (Upper) -> Some (String.uppercase_ascii s)
   | Leaf (Matches pattern) ->
     begin
       try
@@ -52,6 +58,8 @@ let rec traverse s tree =
 
 let accept_s = "accept"
 let reject_s = "reject"
+let lower_s = "lower"
+let upper_s = "upper"
 let matches_s = "matches"
 let replace_s = "replace"
 let all_s = "all"
@@ -83,6 +91,8 @@ let t_of_sexp_list t_of_sexp = function
 let t_of_string = function
   | s when s = accept_s -> Leaf (Accept)
   | s when s = reject_s -> Leaf (Reject)
+  | s when s = lower_s -> Leaf (Lower)
+  | s when s = upper_s -> Leaf (Upper)
   | s ->
     let msg = Printf.sprintf "invalid sexp: atom %s" s in
     raise (Sexp_error msg)
@@ -95,6 +105,8 @@ let rec t_of_sexp =
 let rec sexp_of_t = function
   | Leaf (Accept) -> Sexp.Atom accept_s
   | Leaf (Reject) -> Sexp.Atom reject_s
+  | Leaf (Lower) -> Sexp.Atom lower_s
+  | Leaf (Upper) -> Sexp.Atom upper_s
   | Leaf (Matches pattern) ->
     Sexp.List [Sexp.Atom matches_s; Sexp.Atom pattern ]
   | Leaf (Replace (pattern, replacement)) ->

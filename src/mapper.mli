@@ -2,8 +2,12 @@
 open Sexplib
 
 type t
+
 val accept: t
 val reject: t
+
+val lower: t
+val upper: t
 
 val all: t list -> t
 val first: t list -> t
