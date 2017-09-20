@@ -65,7 +65,7 @@ let main host port rules_file update_rules =
       let f () = rules in f
   in
   Printf.fprintf logc "Establishing server at %s:%d.\n" host port; flush logc;
-  let local_addr = Unix.ADDR_INET(Unix.inet_addr_of_string "127.0.0.1", port) in
+  let local_addr = Unix.ADDR_INET(Unix.inet_addr_of_string host, port) in
   establish_server (handler rules_getter) local_addr
 
 
