@@ -1,3 +1,5 @@
+[![](https://images.microbadger.com/badges/image/burgerdev/ocaml-addressmapper:0.2.svg)](https://microbadger.com/images/burgerdev/ocaml-addressmapper:0.2 "MicroBadger")
+
 # OCaml-AddressMapper
 
 Implementation of a postfix address mapping server.
