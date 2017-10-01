@@ -1,0 +1,2 @@
+#!/bin/sh
+exec /sbin/setuser daemon /server -r "${MAPPING_RULES}"  -b "0.0.0.0" -p 30303 2>&1 >/dev/stdout
