@@ -1,5 +1,2 @@
-Makefile
-configure
 _build
-setup.*
 *.native
