@@ -2,7 +2,7 @@ FROM phusion/baseimage:0.9.22
 
 ENV MAPPING_RULES="/rules/rules.sexp"
 
-ADD https://4-87226222-gh.circle-artifacts.com/0/address-mapper /address-mapper
+ADD https://5-87226222-gh.circle-artifacts.com/0/address-mapper /address-mapper
 
 RUN mkdir -p /etc/service/addressmapper && \
     echo '#!/bin/sh' >/etc/service/addressmapper/run && \
