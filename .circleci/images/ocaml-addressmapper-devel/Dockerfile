@@ -1,12 +1,1 @@
-FROM ocaml/opam:alpine_ocaml-4.04.2
-
-USER root
-
-RUN apk --no-cache add vim m4 ncurses
-
-USER opam
-
-RUN opam install -y ocamlfind ounit sexplib cmdliner
-
-VOLUME /project
-WORKDIR /project
+Dockerfile.ubuntu
