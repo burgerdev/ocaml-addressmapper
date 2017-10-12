@@ -2,8 +2,7 @@ version: 2.0
 jobs:
   build:
     docker:
-        - image: burgerdev/ocaml-addressmapper-devel:0.1-ubuntu
-    working_directory: /tmp/oam
+      - image: burgerdev/ocaml-addressmapper-devel:0.3-alpine
     steps:
       - checkout
       - run:
@@ -16,6 +15,3 @@ jobs:
           command: |
             eval `opam config env`
             make test
-      - store_artifacts:
-          path: /tmp/oam/_build/src/main.native
-          destination: address-mapper

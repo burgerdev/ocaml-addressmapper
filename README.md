@@ -1,3 +1,4 @@
+[![CircleCI](https://circleci.com/gh/burgerdev/ocaml-addressmapper.svg?style=svg)](https://circleci.com/gh/burgerdev/ocaml-addressmapper) 
 [![](https://images.microbadger.com/badges/image/burgerdev/ocaml-addressmapper.svg)](https://microbadger.com/images/burgerdev/ocaml-addressmapper "MicroBadger")
 
 # OCaml-AddressMapper
