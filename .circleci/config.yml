@@ -2,7 +2,7 @@ version: 2.0
 jobs:
   build:
     docker:
-      - image: burgerdev/ocaml-addressmapper-devel:0.3-alpine
+      - image: burgerdev/ocaml-addressmapper-devel:0.4-alpine
     steps:
       - checkout
       - run:
