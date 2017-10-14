@@ -3,7 +3,9 @@
 
 # OCaml-AddressMapper
 
-Implementation of a postfix address mapping server.
+Implementation of a [postfix tcp lookup table][1] that transforms the
+requested address according to a confiugrable set of mapping rules. A common
+use case is to transform an address to a canonical form.
 
 Built-in mapping rules are `accept`, `reject`, `match` a regular expression
 and `replace` a regular expression with a fixed string. Those can be combined
@@ -12,7 +14,7 @@ with `all` and `first`. Additionally, you can use the case transforming rules
 
 ```lisp
 (all
- (matches ".*@example.com")
+ (matches "^.*@example.com$")
  (replace "+[^@]*@" "@")
 )
 ```
@@ -20,12 +22,34 @@ with `all` and `first`. Additionally, you can use the case transforming rules
 This accepts emails for domain `example.com` and removes a sub-address (the
 plus part).
 
+[1]: http://www.postfix.org/tcp_table.5.html
+
 ## Build
 
+### Prerequisites
+
+  * Ocaml >= 4.04.2
+  * Opam
+
+### Build on Host
+
 ```bash
-oasis setup
-make
+make fetch_deps # installs dependencies using opam
+make all
 ```
+
+### Build in Development Container
+
+There's a special [docker image][2] for building this project. Run the above
+commands inside the container, or use the `docker-build.sh` script.
+
+```bash
+# build and execute tests
+export CI=true
+bash docker-build.sh alpine
+```
+
+[2]: https://hub.docker.com/r/burgerdev/ocaml-addressmapper-devel
 
 ## Run
 
@@ -33,18 +57,25 @@ make
 ./main.native --help
 ```
 
+Command line arguments:
+
+  - `-r <file>`
+    path to the rules file on the container (default: `/rules/rules.sexp`)
+  - `-b <address>`
+    IP address to bind to (default: 127.0.0.1)
+  - `-p <port>`
+    listening port (default: 30303)
+  - `-u`
+    re-read the rules file for each request (default: false)
+
 # Docker Image
 
-## Configuration
-
-  * environment variables:
-    - `MAPPING_RULES`
-      path to the rules file on the container (default: `/rules/rules.sexp`)
-
-## Example 
-
 Run the AddressMapper as a docker container in the background, forward the port
-to `localhost:30303` and use the rules file `/tmp/rules.sexp`.
+to `localhost:30303` and use the rules file `/tmp/rules.sexp` below.
+
+```bash
+docker run -d -p 30303:30303 -v /tmp/rules.sexp:/rules.sexp:ro burgerdev/ocaml-addressmapper
+```
 
 ```lisp
 (all
@@ -80,12 +111,9 @@ rules):
      3. The non-profit organization has just one email address, which is reserved
         for raising funds.
 
-We can test our rules file using the pre-built docker image:
+Let's see some examples for how to use the container we spawned:
 
 ```
-port=30303
-docker run -d -v /tmp/rules.sexp:/rules/rules.sexp:ro -p $port:30303 burgerdev/ocaml-addressmapper
-
 echo "get CEO@business.COM" | nc localhost 32768
 # we convert everything to lower case, so the result should be 
 # '200 ceo@business.com'.
