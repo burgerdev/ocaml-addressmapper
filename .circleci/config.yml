@@ -33,7 +33,7 @@ jobs:
           name: "Push to Branch"
           command: |
               version="$(git describe --abbrev=0 --tags)"
-              if [[ "heads/$version" != "${CIRCLE_BRANCH}" ]]
+              if [[ "heads/$version" != "${CIRCLE_BRANCH}" && "master" != "${CIRCLE_BRANCH}" ]]
               then
                   echo "not deploying to '$version' from '${CIRCLE_BRANCH}'"
                   exit 0
@@ -41,7 +41,12 @@ jobs:
               url="https://${CIRCLE_BUILD_NUM}-87226222-gh.circle-artifacts.com/0/main.alpine"
               tmp=$(mktemp)
               cat .circleci/images/ocaml-addressmapper/Dockerfile.alpine.template | sed "s|TEMPLATE|$url|" >$tmp
-              b="$version-alpine"
+              if [[ "master" == "${CIRCLE_BRANCH}" ]]
+              then
+                  b="alpine"
+              else
+                  b="$version-alpine"
+              fi
               git checkout -f -B $b
               mv $tmp Dockerfile
               git add Dockerfile
