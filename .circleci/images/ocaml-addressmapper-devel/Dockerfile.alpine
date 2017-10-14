@@ -4,6 +4,12 @@ USER root
 
 RUN apk --no-cache add vim m4 ncurses
 
+# TODO figure out how to extract only docker/
+RUN VER="17.03.0-ce" && \
+    curl -s -L \
+        https://get.docker.com/builds/Linux/x86_64/docker-$VER.tgz | tar -xz -C /tmp \
+    && mv /tmp/docker/* /usr/local/bin && rm -rf /tmp/*
+
 USER opam
 
 RUN opam install -y ocamlfind ounit sexplib cmdliner
