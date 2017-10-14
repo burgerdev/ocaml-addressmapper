@@ -1,7 +1,7 @@
 FROM alpine
 
 LABEL org.label-schema.vcs-ref=HASH \
-      org.label-schema.vcs-url="e.g. https://github.com/burgerdev/ocaml-addressmapper"
+      org.label-schema.vcs-url="https://github.com/burgerdev/ocaml-addressmapper"
 
 ADD URL /main.native
 RUN chmod a+x /main.native
