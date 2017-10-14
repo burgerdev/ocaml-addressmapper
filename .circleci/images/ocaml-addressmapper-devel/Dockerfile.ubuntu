@@ -2,7 +2,8 @@ FROM ocaml/opam:ubuntu-16.04_ocaml-4.04.2_flambda
 
 USER root
 
-RUN apt-get install m4 && apt-get clean
+RUN apt-get update && apt-get install -yqq m4 && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
 USER opam
 

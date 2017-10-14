@@ -22,9 +22,7 @@ done
 
 version="`git describe --abbrev=0 --tags`"
 
-oam_repo="${OAM_REPO:-burgerdev/}"
-oam_project="${OAM_PROJECT:-ocaml-addressmapper}"
-oam_project_devel="${OAM_PROJECT_DEVEL:-ocaml-addressmapper-devel}"
+oam_repo="burgerdev/"
 
 function prepare_image {
     imagedir=".circleci/images/$1"
@@ -40,29 +38,33 @@ function build_image {
 prepare_image ocaml-addressmapper-devel
 build_image ocaml-addressmapper-devel
 
-name="xxx-tmp-devel-container-$$"
-
 contdir="/home/opam/project"
-volume="$(pwd):$contdir:ro"
 
 function docker_make {
-    prog="cp -r $contdir ${contdir}2
+    prog="export TERM=dumb
+          cp -r $contdir ${contdir}2
           cd ${contdir}2
           git clean -dfx
           make $@"
 }
 
+function docker_create {
+    container=$(docker create "$@" $image /bin/sh -c "$prog")
+    docker cp $(pwd) $container:$contdir
+}
+
 if [[ -n "$OAM_TEST" ]]
 then
     docker_make clean test
-    docker run --name "$name" -v "$volume" $image /bin/sh -c "$prog"
-    docker rm "$name"
+    docker_create
+    docker start -a $container
+    docker rm "$container"
 fi
 
 docker_make clean build
 
-container=$(docker run -d --name "$name" -v $volume $image /bin/sh -c "$prog")
-docker wait $container
+docker_create
+docker start -a "$container"
 
 prepare_image ocaml-addressmapper
 
@@ -73,3 +75,43 @@ cp $build_dir/src/main.native $imagedir/
 docker rm $container
 
 build_image ocaml-addressmapper
+
+function assert_expected {
+    actual=$(mktemp)
+    expected=$(mktemp)
+    echo "$1" | nc localhost 30303 >"$actual"
+    echo -ne "$2" >"$expected"
+    if ! diff "$actual" "$expected"
+    then
+        return 1
+    else
+        rm -f "$actual" "$expected"
+    fi
+}
+
+function cleanup {
+    if [[ -z "$DEBUG" ]]
+    then
+        docker kill "$container" || true
+        docker rm "$container" || true
+    fi
+}
+
+if [[ -n "$OAM_IT" ]]
+then
+    trap cleanup exit
+    container=$(docker create \
+        -p 30303:30303 \
+        $image -r /rules.sexp -b 0.0.0.0)
+
+    docker cp "$(pwd)/test/rules.sexp" $container:/rules.sexp
+    docker start $container
+    sleep 2
+
+    assert_expected "get abcd" "200 bbcd\n"
+    assert_expected "get wxyz" "200 wxyz\n"
+    assert_expected "get aazz" "500 not-found\n"
+
+    assert_expected "get ab0011856cd" "200 bbNUMBERScd\n"
+    assert_expected "get ab0cd1" "200 bbNUMBERScd1\n"
+fi
