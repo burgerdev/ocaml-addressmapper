@@ -2,7 +2,7 @@ open Unix
 open Cmdliner
 
 let bin_name = "address-mapping-server"
-let bin_version = "0.1"
+let bin_version = "0.5"
 
 let logc = out_channel_of_descr stderr
 
