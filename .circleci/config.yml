@@ -1,8 +1,8 @@
 version: 2.0
 jobs:
-  build:
+  ci:
     docker:
-      - image: burgerdev/ocaml-addressmapper-devel:0.4-alpine
+      - image: burgerdev/ocaml-addressmapper-devel
     steps:
       - checkout
       - run:
@@ -15,3 +15,41 @@ jobs:
           command: |
             eval `opam config env`
             make test
+      - store_artifacts:
+          path: /tmp/oam/_build/src/main.native
+          destination: main.native
+  cd:
+    docker:
+      - image: alpine
+    working_directory: /mnt
+    steps:
+      - add_ssh_keys:
+          fingerprints:
+            - "fa:c2:d1:06:3d:cf:db:e6:b7:5a:2b:ac:9b:40:81:11"
+      - setup_remote_docker
+      - checkout
+      - run:
+          name: "Integration Test"
+          command: |
+            OAM_DISTRO=alpine /bin/sh -x ./docker-setup.sh "${}"
+            OAM_DISTRO=ubuntu /bin/sh -x ./docker-setup.sh "${}"
+      - deploy:
+          name: "Push to Branch"
+          command: |
+              version="$(git describe --abbrev=0 --tags)"
+              if [[ "$version" != "${CIRCLE_BRANCH}" ]]
+              then
+                  echo "not deploying to '$version' from '${CIRCLE_BRANCH}'"
+                  exit 0
+              fi
+              url="https://${CIRCLE_BUILD_NUM}-87226222-gh.circle-artifacts.com/0/main.native"
+              tmp=$(mktemp)
+              cat .circleci/images/ocaml-addressmapper/Dockerfile.template | sed "s|TEMPLATE|$url|" >$tmp
+              b="$version-alpine"
+              git fetch
+              git checkout --orphan $b || git checkout $b
+              mv $tmp Dockerfile
+              git add Dockerfile
+              git commit -m "automatic commit triggered by CircleCI build https://circleci.com/gh/burgerdev/ocaml-addressmapper/${CIRCLE_BUILD_NUM}"
+              fi
+              git push origin $b

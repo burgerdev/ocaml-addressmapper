@@ -73,3 +73,41 @@ cp $build_dir/src/main.native $imagedir/
 docker rm $container
 
 build_image ocaml-addressmapper
+
+function assert_expected {
+    actual=$(mktemp)
+    expected=$(mktemp)
+    echo "$1" | nc localhost 30303 >"$actual"
+    echo -ne "$2" >"$expected"
+    if ! diff "$actual" "$expected"
+    then
+        return 1
+    else
+        rm -f "$actual" "$expected"
+    fi
+}
+
+function cleanup {
+    if [[ -z "$DEBUG" ]]
+    then
+        docker kill "$name" || true
+        docker rm "$name" || true
+    fi
+}
+
+if [[ -n "$OAM_IT" ]]
+then
+    trap cleanup exit
+    docker run -d --name "$name" \
+        -p 30303:30303 \
+        -v "$(pwd)/test/rules.sexp:/rules.sexp:ro" \
+        $image -r /rules.sexp -b 0.0.0.0
+    sleep 2
+
+    assert_expected "get abcd" "200 bbcd\n"
+    assert_expected "get wxyz" "200 wxyz\n"
+    assert_expected "get aazz" "500 not-found\n"
+
+    assert_expected "get ab0011856cd" "200 bbNUMBERScd\n"
+    assert_expected "get ab0cd1" "200 bbNUMBERScd1\n"
+fi
