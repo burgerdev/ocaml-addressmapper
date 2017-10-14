@@ -1,0 +1,7 @@
+FROM alpine
+
+ADD TEMPLATE /main.native
+
+ENTRYPOINT ["/bin/sh", "-c", "/main.native \"$@\"", "/main.native"]
+
+EXPOSE 30303
