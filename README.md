@@ -1,5 +1,4 @@
-[![CircleCI](https://circleci.com/gh/burgerdev/ocaml-addressmapper.svg?style=shield)](https://circleci.com/gh/burgerdev/ocaml-addressmapper) 
-[![](https://images.microbadger.com/badges/version/burgerdev/ocaml-addressmapper.svg)](https://microbadger.com/images/burgerdev/ocaml-addressmapper "MicroBadger")
+[![CircleCI](https://circleci.com/gh/burgerdev/ocaml-addressmapper.svg?style=shield)](https://circleci.com/gh/burgerdev/ocaml-addressmapper) [![](https://images.microbadger.com/badges/version/burgerdev/ocaml-addressmapper.svg)](https://hub.docker.com/r/burgerdev/ocaml-addressmapper/ "Docker Hub")
 
 # OCaml-AddressMapper
 
@@ -40,13 +39,14 @@ make all
 
 ### Build in Development Container
 
-[![](https://images.microbadger.com/badges/version/burgerdev/ocaml-addressmapper-devel.svg)](https://microbadger.com/images/burgerdev/ocaml-addressmapper-devel "MicroBadger")
+[![](https://images.microbadger.com/badges/version/burgerdev/ocaml-addressmapper-devel.svg)](https://hub.docker.com/r/burgerdev/ocaml-addressmapper/ "Developer Image on Docker Hub")
 
 There's a special [docker image][2] for building this project. Run the above
-commands inside the container, or use the `docker-build.sh` script.
+commands inside the container, or use the `docker-build.sh` script. The latter
+builds the development image, compiles the OCaml sources, runs tests (triggered
+by environment variable `CI`) and builds the production image.
 
 ```bash
-# build and execute tests
 export CI=true
 bash docker-build.sh alpine
 ```
