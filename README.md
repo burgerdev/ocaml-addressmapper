@@ -1,5 +1,5 @@
 [![CircleCI](https://circleci.com/gh/burgerdev/ocaml-addressmapper.svg?style=shield)](https://circleci.com/gh/burgerdev/ocaml-addressmapper) 
-[![](https://images.microbadger.com/badges/image/burgerdev/ocaml-addressmapper.svg)](https://microbadger.com/images/burgerdev/ocaml-addressmapper "MicroBadger")
+[![](https://images.microbadger.com/badges/version/burgerdev/ocaml-addressmapper.svg)](https://microbadger.com/images/burgerdev/ocaml-addressmapper "MicroBadger")
 
 # OCaml-AddressMapper
 
@@ -39,6 +39,8 @@ make all
 ```
 
 ### Build in Development Container
+
+[![](https://images.microbadger.com/badges/version/burgerdev/ocaml-addressmapper-devel.svg)](https://microbadger.com/images/burgerdev/ocaml-addressmapper-devel "MicroBadger")
 
 There's a special [docker image][2] for building this project. Run the above
 commands inside the container, or use the `docker-build.sh` script.
