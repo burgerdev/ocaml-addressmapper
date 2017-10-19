@@ -66,7 +66,8 @@ let main host port rules_file update_rules =
   in
   Printf.fprintf logc "Establishing server at %s:%d.\n" host port; flush logc;
   let local_addr = Unix.ADDR_INET(Unix.inet_addr_of_string host, port) in
-  establish_server (handler rules_getter) local_addr
+  let serve_forever _ = establish_server (handler rules_getter) local_addr in
+  Init.supervise serve_forever
 
 
 (* Cmdliner stuff *)
