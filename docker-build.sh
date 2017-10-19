@@ -44,6 +44,7 @@ function docker_make {
     prog="export TERM=dumb
           cp -r $contdir ${contdir}2
           cd ${contdir}2
+          ls -la
           git clean -dfx
           make $@"
 }
