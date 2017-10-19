@@ -2,6 +2,6 @@ FROM alpine
 
 COPY main.native  /
 
-ENTRYPOINT ["/bin/sh", "-c", "/main.native \"$@\"", "/main.native"]
+ENTRYPOINT ["/main.native"]
 
 EXPOSE 30303
