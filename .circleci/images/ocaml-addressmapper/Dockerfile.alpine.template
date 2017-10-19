@@ -6,6 +6,6 @@ LABEL org.label-schema.vcs-ref=HASH \
 ADD URL /main.native
 RUN chmod a+x /main.native
 
-ENTRYPOINT ["/bin/sh", "-c", "/main.native \"$@\"", "/main.native"]
+ENTRYPOINT ["/main.native"]
 
 EXPOSE 30303
