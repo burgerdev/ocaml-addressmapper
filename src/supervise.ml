@@ -10,43 +10,14 @@ let logNow s =
   Printf.fprintf logc "[%d] %s\n" (getpid ()) s; flush logc
 
 
-let main c use_demo prog argv =
+let main c prog argv =
   let rec child _ =
-    if use_demo then
-      begin
-        logNow "forking";
-        match fork () with
-        | 0 ->
-          begin
-            logNow "double forking";
-            match fork () with
-            | 0 ->
-              sleep 1;
-              logNow "grandchild exec";
-              execv prog (Array.of_list argv)
-            | _ ->
-              logNow "child exit";
-              exit 2
-          end
-        | i ->
-          (* parent process keeps spawning children *)
-          logNow (Printf.sprintf "forked process %d" i);
-          let rec aux _ =
-            try
-              ignore (waitpid [] i)
-            with
-            | Unix_error (EINTR, _, _) -> aux ()
-          in aux ();
-          sleep 5;
-          child ()
-      end
-    else
-      execv prog (Array.of_list argv)
+    execv prog (Array.of_list argv)
   in
   match argv with
   | [] ->
     Printf.fprintf logc "Empty argument vector not allowed!";
-    1
+    exit 1
   | _ :: t ->
     Printf.fprintf logc "Supervising effective command line: [%s" prog;
     (* supervise_exec prog args *)
@@ -83,10 +54,6 @@ let cleanup_term =
   let doc = "PID to clean up after main child terminated. 'g' cleans up the childs group, 'p' the supervisors group." in
   Arg.(value & opt (some cleanup_conv) None & info ["c"; "cleanup"] ~doc)
 
-let demo_term =
-  let doc = "Use demo app." in
-  Arg.(value & flag & info ["d"; "demo"] ~doc)
-
 let prog_term =
   let doc = "Program to execute (is looked up in PATH)" in
   Arg.(required & pos 0 (some string) None & info [] ~docv:"PROGRAM" ~doc)
@@ -95,7 +62,7 @@ let args_term =
   let doc = "Program arguments. The first argument should be the program's name (argv[0])." in
   Arg.(non_empty & pos_right 0 string [] & info [] ~docv:"ARG" ~doc)
 
-let main_term = Term.(const main $ cleanup_term$ demo_term $ prog_term $ args_term)
+let main_term = Term.(const main $ cleanup_term $ prog_term $ args_term)
 
 let info_term =
   let doc = "Supervise a process like a real init process would." in
@@ -103,6 +70,7 @@ let info_term =
 
 let () =
   let code = match Term.eval (main_term, info_term) with
-  | `Ok n -> n
+  | `Ok (WEXITED n) -> n
+  | `Ok (_) -> 255
   | res -> Term.exit_status_of_result res in
   exit code

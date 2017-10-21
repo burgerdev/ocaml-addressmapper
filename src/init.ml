@@ -78,23 +78,19 @@ let rec supervise_pid cleanup n =
         | WEXITED status_code ->
           logInfo (Printf.sprintf "Child exited with [%d].\n" status_code);
           cleanup ();
-          status_code
+          cause
         | WSIGNALED signo ->
           logInfo (Printf.sprintf "Child terminated with signal [%d].\n" signo);
           cleanup ();
-          (128 + signo)
+          cause
         | _ ->
           (* ignore stopped *)
           supervise_pid cleanup n
-      end
+      end;
     | _ ->
       (* some other child exited, we reap it and continue *)
       supervise_pid cleanup n
   with
-  | Unix_error (ECHILD, _, _) ->
-    (* no more children, maybe we missed it? *)
-    logError "Lost the child process.";
-    255
   | Unix_error (EINTR, _, _) ->
     (* our wait got interrupted, restart it *)
     supervise_pid cleanup n
@@ -103,8 +99,9 @@ let supervise ?cleanup:(cleanup=None) f =
   match fork () with
     | 0 -> f (); exit 0
     | n ->
+      logInfo (Printf.sprintf "[%d]: Supervising [%d].\n" (getpid ()) n);
       let handler signo =
-        logInfo (Printf.sprintf "Forwarding signal [%d] to [%d].\n" signo n);
+        logInfo (Printf.sprintf "[%d]: Forwarding signal [%d] to [%d].\n" (getpid ()) signo n);
         safe_kill n signo
       in
       set_signal sigint (Signal_handle handler);
@@ -116,10 +113,4 @@ let supervise ?cleanup:(cleanup=None) f =
         | Some Kill_parent_group -> graceful_kill (- getpid ())
         | None -> fun _ -> ()
       in
-      try
-        supervise_pid cleanup_fun n
-      with
-      | e ->
-        logError "Supervisor raised an uncaught error:";
-        logValue e;
-        254
+      supervise_pid cleanup_fun n
