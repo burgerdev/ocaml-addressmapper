@@ -12,7 +12,7 @@ let extract_rules filename_opt =
   | Some filename ->
     let ic = open_in filename in
     let s = Sexplib.Sexp.input_sexp ic in
-    Mapper.t_of_sexp s
+    Parser.rule_of_sexp s
 
 let parse_email s =
   try
@@ -43,7 +43,7 @@ let handler rules_getter ic oc =
         Printf.fprintf logc "Error: malformed request [%s]\n" input;
         Malformed
       | Some a ->
-        match Mapper.traverse a (rules_getter ()) with
+        match Mapper.apply (rules_getter ()) a with
         | Some b ->
           Printf.fprintf logc "Info: found mapping of [%s] to [%s].\n" a b;
           Found b

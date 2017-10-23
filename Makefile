@@ -6,12 +6,15 @@ build: _build/src/main.native _build/src/supervise.native
 
 all: build test
 
-test: test_init test_mapper
+test: test_init test_mapper test_parser
 
 test_init: _build/test/test_init.native
 	$<
 
 test_mapper: _build/test/test_mapper.native
+	$<
+
+test_parser: _build/test/test_parser.native
 	$<
 
 build_test: _build/test/test_mapper.native
@@ -24,9 +27,8 @@ _build/src/%.native: src/%.ml $(SOURCES)
 
 _build/test/%.native: test/%.ml $(SOURCES) $(TEST_SOURCES)
 	ocamlbuild $(FLAGS) -I src test/$*.native
-	$@
 
 fetch_deps:
 	opam install -y ocamlfind ounit sexplib cmdliner
 
-.PHONY: build all test test_init test_mapper clean fetch_deps
+.PHONY: build all test test_init test_mapper test_parser clean fetch_deps
