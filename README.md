@@ -12,7 +12,7 @@ with `all` and `first`. Additionally, you can use the case transforming rules
 `lower` and `upper`. The mapping rules are specified as S-expressions:
 
 ```lisp
-(all
+(
  (matches "^.*@example.com$")
  (replace "+[^@]*@" "@")
 )
@@ -80,56 +80,55 @@ docker run -d -p 30303:30303 -v /tmp/rules.sexp:/rules.sexp:ro burgerdev/ocaml-a
 ```
 
 ```lisp
-(all
+(
+  (lower (replace "+[^@]*@" "@"))
 
- (all
-  lower
-  (replace "+[^@]*@" "@")
- )
+  (not (matches "sauron@mord\.or"))
 
- (first
-  (all (matches "sauron@mord.or") reject)
-  (all (matches ".*@business.com") (first (matches "ceo@.*") (matches "pr@.*")))
-  (matches "donations@nonprofit\.org")
- )
-
+  (first
+    (
+      (
+        (matches "^[^@]+@business\.com$")
+        (first ((matches "^ceo@.*")
+                (matches "^pr@.*"))
+        )
+      )
+      (matches "^donations@nonprofit\.org$")
+    )
+  )
 )
 ```
 
-This file contains the following instructions (see 
+This file contains the following instructions (see
 [configuration.md](configuration.md) for an explanation of the addressmapper
 rules):
 
-  1. First block: address sanitizing.
-
+  1. Address sanitizing.
      1. Convert the email address to lower case.
-	 2. Strip the [sub-addresses](https://en.wikipedia.org/wiki/Email_address#Sub-addressing).
-  2. Second block: user database. If any of the sub-clauses matches, we got our 
+	   2. Strip the [sub-addresses](https://en.wikipedia.org/wiki/Email_address#Sub-addressing).
+  2. Keep Sauron on the far side of the walls.
+  3. User database. If any of the sub-clauses matches, we got our
      user.
-
-     1. If the user is Sauron, he will not get in. Nobody likes a spoilsport.
-	 2. There are two acceptable users at `business.com`, the *CEO* and the 
+	   1. There are two acceptable users at `business.com`, the *CEO* and the
         *Public Relations Department*.
-     3. The non-profit organization has just one email address, which is reserved
+     2. The non-profit organization has just one email address, which is reserved
         for raising funds.
 
 Let's see some examples for how to use the container we spawned:
 
 ```
-echo "get CEO@business.COM" | nc localhost 32768
-# we convert everything to lower case, so the result should be 
+echo "get CEO@business.COM" | nc localhost 30303
+# we convert everything to lower case, so the result should be
 # '200 ceo@business.com'.
 
-echo "get donations+fundraiser2017@nonprofit.org" | nc localhost 32768
-echo "get donations+fundraiser2017@nonprofit.org" | nc localhost 32768
-# Both with and without a sub-address, this should result in 
+echo "get donations@nonprofit.org" | nc localhost 30303
+echo "get donations+fundraiser2017@nonprofit.org" | nc localhost 30303
+# Both with and without a sub-address, this should result in
 # '200 donations@nonprofit.org'.
 
-echo "get sauron@mord.or"
+echo "get sauron@mord.or" | nc localhost 30303
 # Sauron is explicitly excluded, this should be '500 not-found'.
 
-echo "put sauron@mord.or" | nc localhost 32768
+echo "put sauron@mord.or" | nc localhost 30303
 # This is not valid postfix mapper syntax, therefore '400 malformed request'.
 ```
-
-
