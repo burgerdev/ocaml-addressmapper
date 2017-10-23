@@ -12,7 +12,7 @@ let extract_rules filename_opt =
   | Some filename ->
     let ic = open_in filename in
     let s = Sexplib.Sexp.input_sexp ic in
-    Mapper.t_of_sexp s
+    Parser.rule_of_sexp s
 
 let parse_email s =
   try
@@ -43,7 +43,7 @@ let handler rules_getter ic oc =
         Printf.fprintf logc "Error: malformed request [%s]\n" input;
         Malformed
       | Some a ->
-        match Mapper.traverse a (rules_getter ()) with
+        match Mapper.apply (rules_getter ()) a with
         | Some b ->
           Printf.fprintf logc "Info: found mapping of [%s] to [%s].\n" a b;
           Found b
@@ -66,7 +66,8 @@ let main host port rules_file update_rules =
   in
   Printf.fprintf logc "Establishing server at %s:%d.\n" host port; flush logc;
   let local_addr = Unix.ADDR_INET(Unix.inet_addr_of_string host, port) in
-  establish_server (handler rules_getter) local_addr
+  let serve_forever _ = establish_server (handler rules_getter) local_addr in
+  Init.supervise serve_forever
 
 
 (* Cmdliner stuff *)
