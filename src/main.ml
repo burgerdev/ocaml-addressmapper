@@ -34,8 +34,8 @@ let message_of_status s =
   | Found s -> Format.sprintf "200 %s\n" s
 
 let handler rules_getter ic oc =
-  let s =
-    try
+  let rec handle_single_request _ =
+    let s =
       let input = input_line ic in
       let email = parse_email input in
       match email with
@@ -50,11 +50,15 @@ let handler rules_getter ic oc =
         | None ->
           Printf.fprintf logc "Info: no mapping found for [%s].\n" a;
           Not_found
-    with
-    | End_of_file ->
-      Printf.fprintf logc "Error: EOF encountered while scanning.\n";
-      Malformed in
-  output_string oc (message_of_status s)
+    in
+    output_string oc (message_of_status s);
+    handle_single_request ()
+  in
+  try
+    handle_single_request ()
+  with
+  | End_of_file ->
+    Printf.fprintf logc "Info: client closed the connection.\n"
 
 let main host port rules_file update_rules =
   let rules_getter =
