@@ -44,18 +44,37 @@ let not rule =
   in return invert
 
 let matches pattern =
+  let re = (Str.regexp pattern) in
   let handler input =
     try
-      let _ = Str.search_forward (Str.regexp pattern) input 0 in
+      let _ = Str.search_forward re input 0 in
       Some input
     with
     | Not_found -> None
   in return handler
 
-let replace pattern replacement =
+let prefix_matches prefix =
+  let n = String.length prefix in
   let handler input =
-    Some (Str.replace_first (Str.regexp pattern) replacement input)
+    if String.length input >= n && String.sub input 0 n = prefix then
+      Some input
+    else
+      None
   in return handler
+
+let suffix_matches suffix =
+  let n = String.length suffix in
+  let handler input =
+    let m = String.length input in
+    if m >= n && String.sub input (m-n) n = suffix then
+      Some input
+    else
+      None
+  in return handler
+
+let replace pattern replacement =
+  let repl = Str.replace_first (Str.regexp pattern) replacement in
+  let handler input = Some (repl input) in return handler
 
 let lower = return (fun input -> Some (String.lowercase_ascii input))
 let upper = return (fun input -> Some (String.uppercase_ascii input))

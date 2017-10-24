@@ -34,6 +34,8 @@ and transformation =
   | Matches of string
   | Replace of string * string
   | Constant of string
+  | Prefix of string
+  | Suffix of string
 
 exception Sexp_error of string
 
@@ -47,6 +49,8 @@ let terminal_of_sexp = function
       match r with
       | "matches" -> Transformation (Matches s)
       | "constant" -> Transformation (Constant s)
+      | "prefix_matches" -> Transformation (Prefix s)
+      | "suffix_matches" -> Transformation (Suffix s)
       | _ ->
         Conv.of_sexp_error "can't parse unary transformation" (Sexp.Atom r)
     end
@@ -59,29 +63,38 @@ let terminal_of_sexp = function
     end
   | s -> Conv.of_sexp_error "can't parse terminal rule of sexp" s
 
-let rec tree_of_sexp sexp =
-  let combination_of_sexp = function
-    | Sexp.List [left; Sexp.Atom "&&"; right] ->
-      B_rule (And (tree_of_sexp left, tree_of_sexp right))
-    | Sexp.List [left; Sexp.Atom "||"; right] ->
-      B_rule (Or (tree_of_sexp left, tree_of_sexp right))
-    | Sexp.List [Sexp.Atom "not"; r] ->
-      B_rule (Not (tree_of_sexp r))
-    | Sexp.List [Sexp.Atom "first"; Sexp.List t] ->
-      First (List.map tree_of_sexp t)
-    | Sexp.List l ->
-      All (List.map tree_of_sexp l)
-    | sexp -> Conv.of_sexp_error "can't parse combination rule of sexp" sexp
-  in
-  try
-    Terminal (terminal_of_sexp sexp)
-  with
-  | Conv.Of_sexp_error (_, _) ->
+exception Stop_parsing of Sexp.t
+
+let tree_of_sexp sexp =
+  let rec aux sexp =
+    let combination_of_sexp = function
+      | Sexp.List [left; Sexp.Atom "&&"; right] ->
+        B_rule (And (aux left, aux right))
+      | Sexp.List [left; Sexp.Atom "||"; right] ->
+        B_rule (Or (aux left, aux right))
+      | Sexp.List [Sexp.Atom "not"; r] ->
+        B_rule (Not (aux r))
+      | Sexp.List [Sexp.Atom "first"; Sexp.List t] ->
+        First (List.map aux t)
+      | Sexp.List l ->
+        All (List.map aux l)
+      | sexp -> Conv.of_sexp_error "can't parse combination rule of sexp" sexp
+    in
     try
-      Combination (combination_of_sexp sexp)
+      Terminal (terminal_of_sexp sexp)
     with
     | Conv.Of_sexp_error (_, _) ->
-      Conv.of_sexp_error "could neither parse terminal nor combination" sexp
+      try
+        Combination (combination_of_sexp sexp)
+      with
+      | Conv.Of_sexp_error (_, _) ->
+        raise (Stop_parsing sexp)
+  in
+  try
+    aux sexp
+  with
+  | Stop_parsing sexp ->
+    Conv.of_sexp_error "could neither parse terminal nor combination" sexp
 
 let rec mapper_rule_of_tree tree =
   let rule_of_terminal = function
@@ -93,6 +106,8 @@ let rec mapper_rule_of_tree tree =
     | Transformation (Replace (pattern, replacement)) ->
       Mapper.replace pattern replacement
     | Transformation (Constant replacement) -> Mapper.constant replacement
+    | Transformation (Prefix prefix) -> Mapper.prefix_matches prefix
+    | Transformation (Suffix suffix) -> Mapper.suffix_matches suffix
   in
 
   let rule_of_combination = function

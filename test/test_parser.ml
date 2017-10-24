@@ -7,7 +7,7 @@ let test_sexp_string _ =
               (first (accept reject))
               (not (matches \"foo\"))
               (replace \"bar\" \"baz\")
-              (() && (matches \"baz\"))
+              ( (() && (prefix_matches \"ba\")) && (suffix_matches \"az\"))
               ((first ()) || (replace \"baz\" \"foo\"))
              )
              (replace \".*\" \"moo\")
@@ -23,7 +23,7 @@ let test_documentation _ =
 (
   (lower (replace \"+[^@]*@\" \"@\"))
 
-  (not (matches \"sauron@mord\\.or\"))
+  (not (prefix_matches \"sauron\"))
 
   (first
     (
