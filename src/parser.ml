@@ -34,6 +34,8 @@ and transformation =
   | Matches of string
   | Replace of string * string
   | Constant of string
+  | Prefix of string
+  | Suffix of string
 
 exception Sexp_error of string
 
@@ -47,6 +49,8 @@ let terminal_of_sexp = function
       match r with
       | "matches" -> Transformation (Matches s)
       | "constant" -> Transformation (Constant s)
+      | "prefix_matches" -> Transformation (Prefix s)
+      | "suffix_matches" -> Transformation (Suffix s)
       | _ ->
         Conv.of_sexp_error "can't parse unary transformation" (Sexp.Atom r)
     end
@@ -102,6 +106,8 @@ let rec mapper_rule_of_tree tree =
     | Transformation (Replace (pattern, replacement)) ->
       Mapper.replace pattern replacement
     | Transformation (Constant replacement) -> Mapper.constant replacement
+    | Transformation (Prefix prefix) -> Mapper.prefix_matches prefix
+    | Transformation (Suffix suffix) -> Mapper.suffix_matches suffix
   in
 
   let rule_of_combination = function

@@ -32,6 +32,12 @@ val upper: (string, string) rule
 val matches: string -> (string, string) rule
 (* [matches a] returns the input iff it matches regex [a] *)
 
+val prefix_matches: string -> (string, string) rule
+(* [prefix_matches p] returns the input iff string [p] is a prefix of input *)
+
+val suffix_matches: string -> (string, string) rule
+(* [suffix_matches s] returns the input iff string [s] is a suffix of input *)
+
 val replace: string -> string -> (string, string) rule
 (* [replace a b] replaces the first occurrence of regex [a] with string [b] *)
 

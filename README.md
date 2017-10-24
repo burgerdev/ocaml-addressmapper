@@ -83,7 +83,7 @@ docker run -d -p 30303:30303 -v /tmp/rules.sexp:/rules.sexp:ro burgerdev/ocaml-a
 (
   (lower (replace "+[^@]*@" "@"))
 
-  (not (matches "sauron@mord\.or"))
+  (not (prefix_matches "sauron"))
 
   (first
     (
