@@ -80,7 +80,7 @@ build_image ocaml-addressmapper
 function assert_expected {
     actual=$(mktemp)
     expected=$(mktemp)
-    docker exec $container /bin/sh -c "echo '$1' | nc localhost 30303" >"$actual"
+    docker exec $container /bin/sh -c "echo -e '$1' | nc localhost 30303" >"$actual"
     echo -ne "$2" >"$expected"
     if ! diff "$actual" "$expected"
     then
@@ -114,4 +114,6 @@ then
 
     assert_expected "get ab0011856cd" "200 bbNUMBERScd\n"
     assert_expected "get ab0cd1" "200 bbNUMBERScd1\n"
+
+    assert_expected "get abcd\nget wxyz" "200 bbcd\n200 wxyz\n"
 fi
