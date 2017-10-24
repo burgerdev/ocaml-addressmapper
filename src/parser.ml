@@ -59,29 +59,38 @@ let terminal_of_sexp = function
     end
   | s -> Conv.of_sexp_error "can't parse terminal rule of sexp" s
 
-let rec tree_of_sexp sexp =
-  let combination_of_sexp = function
-    | Sexp.List [left; Sexp.Atom "&&"; right] ->
-      B_rule (And (tree_of_sexp left, tree_of_sexp right))
-    | Sexp.List [left; Sexp.Atom "||"; right] ->
-      B_rule (Or (tree_of_sexp left, tree_of_sexp right))
-    | Sexp.List [Sexp.Atom "not"; r] ->
-      B_rule (Not (tree_of_sexp r))
-    | Sexp.List [Sexp.Atom "first"; Sexp.List t] ->
-      First (List.map tree_of_sexp t)
-    | Sexp.List l ->
-      All (List.map tree_of_sexp l)
-    | sexp -> Conv.of_sexp_error "can't parse combination rule of sexp" sexp
-  in
-  try
-    Terminal (terminal_of_sexp sexp)
-  with
-  | Conv.Of_sexp_error (_, _) ->
+exception Stop_parsing of Sexp.t
+
+let tree_of_sexp sexp =
+  let rec aux sexp =
+    let combination_of_sexp = function
+      | Sexp.List [left; Sexp.Atom "&&"; right] ->
+        B_rule (And (aux left, aux right))
+      | Sexp.List [left; Sexp.Atom "||"; right] ->
+        B_rule (Or (aux left, aux right))
+      | Sexp.List [Sexp.Atom "not"; r] ->
+        B_rule (Not (aux r))
+      | Sexp.List [Sexp.Atom "first"; Sexp.List t] ->
+        First (List.map aux t)
+      | Sexp.List l ->
+        All (List.map aux l)
+      | sexp -> Conv.of_sexp_error "can't parse combination rule of sexp" sexp
+    in
     try
-      Combination (combination_of_sexp sexp)
+      Terminal (terminal_of_sexp sexp)
     with
     | Conv.Of_sexp_error (_, _) ->
-      Conv.of_sexp_error "could neither parse terminal nor combination" sexp
+      try
+        Combination (combination_of_sexp sexp)
+      with
+      | Conv.Of_sexp_error (_, _) ->
+        raise (Stop_parsing sexp)
+  in
+  try
+    aux sexp
+  with
+  | Stop_parsing sexp ->
+    Conv.of_sexp_error "could neither parse terminal nor combination" sexp
 
 let rec mapper_rule_of_tree tree =
   let rule_of_terminal = function
