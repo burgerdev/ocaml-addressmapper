@@ -1,17 +1,6 @@
 
 open Sexplib
 
-let accept_s = "accept"
-let reject_s = "reject"
-let lower_s = "lower"
-let upper_s = "upper"
-let matches_s = "matches"
-let replace_s = "replace"
-let constant_s = "constant"
-let all_s = "all"
-let first_s = "first"
-let not_s = "not"
-
 (* Grammar *)
 
 type rule =
@@ -40,10 +29,10 @@ and transformation =
 exception Sexp_error of string
 
 let terminal_of_sexp = function
-  | Sexp.Atom s when s = accept_s -> Action Accept
-  | Sexp.Atom s when s = reject_s -> Action Reject
-  | Sexp.Atom s when s = lower_s -> Action Lower
-  | Sexp.Atom s when s = upper_s -> Action Upper
+  | Sexp.Atom "accept" -> Action Accept
+  | Sexp.Atom "reject" -> Action Reject
+  | Sexp.Atom "lower" -> Action Lower
+  | Sexp.Atom "upper" -> Action Upper
   | Sexp.List [Sexp.Atom r; Sexp.Atom s] ->
     begin
       match r with
