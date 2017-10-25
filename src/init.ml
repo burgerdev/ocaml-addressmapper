@@ -1,30 +1,20 @@
 open Unix
 open Sys
 
+let string_of_signal = function
+  | i when i = sigint -> "SIGINT"
+  | i when i = sigterm -> "SIGTERM"
+  | i when i = sigkill -> "SIGKILL"
+  | i when i = sigquit -> "SIGQUIT"
+  | i when i = sigabrt -> "SIGABRT"
+  | i when i = sigsegv -> "SIGSEGV"
+  | i when i = sigfpe -> "SIGFPE"
+  | i -> string_of_int i
+
 type cleanup =
   | Kill_group
   | Kill_parent_group
   | Kill_pid of int
-
-let logc = out_channel_of_descr stderr
-
-let logValue v =
-  output_value logc v;
-  output_string logc "\n";
-  flush logc
-
-let logWith level msg =
-  output_string logc level;
-  output_string logc ": ";
-  output_string logc msg;
-  output_string logc "\n";
-  flush logc
-
-let logError msg =
-  logWith "Error" msg
-
-let logInfo msg =
-  logWith "Info" msg
 
 (* TODO implement safe signalling (catch ESRCH) *)
 let safe_kill pid signo =
@@ -43,14 +33,14 @@ let graceful_kill whom () =
   (* SIGKILL after grace period *)
   let on_alarm _ =
     try
-      logError "Could not kill all children.";
+      Logs.warn (fun m -> m "Could not kill all children.");
       safe_kill whom sigkill;
       (* TODO if we were not part of the killed processes *)
       (* safe_kill 0 sigkill ??? *)
     with
     | _ ->
       (* ignore cleanup errors *)
-      logError "More errors occured during cleanup.";
+      Logs.err (fun m -> m "Errors occured during cleanup.");
       ()
   in set_signal sigalrm (Signal_handle on_alarm);
 
@@ -76,11 +66,11 @@ let rec supervise_pid cleanup n =
       begin
         match cause with
         | WEXITED status_code ->
-          logInfo (Printf.sprintf "Child exited with [%d].\n" status_code);
+          Logs.info (fun m -> m "Child exited with [%d]." status_code);
           cleanup ();
           cause
         | WSIGNALED signo ->
-          logInfo (Printf.sprintf "Child terminated with signal [%d].\n" signo);
+          Logs.info (fun m -> m "Child terminated with signal [%s]." (string_of_signal signo));
           cleanup ();
           cause
         | _ ->
@@ -99,9 +89,9 @@ let supervise ?cleanup:(cleanup=None) f =
   match fork () with
     | 0 -> f (); exit 0
     | n ->
-      logInfo (Printf.sprintf "[%d]: Supervising [%d].\n" (getpid ()) n);
+      Logs.info (fun m -> m "[%d]: Supervising [%d]." (getpid ()) n);
       let handler signo =
-        logInfo (Printf.sprintf "[%d]: Forwarding signal [%d] to [%d].\n" (getpid ()) signo n);
+        Logs.debug (fun m -> m "[%d]: Forwarding signal [%s] to [%d]." (getpid ()) (string_of_signal signo) n);
         safe_kill n signo
       in
       set_signal sigint (Signal_handle handler);

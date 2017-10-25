@@ -4,4 +4,6 @@ PKG sexplib
 PKG unix
 PKG ounit
 PKG cmdliner
+PKG logs
+PKG fmt
 FLG -w +a-4-40..42-44-45-48
