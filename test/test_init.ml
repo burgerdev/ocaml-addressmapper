@@ -22,18 +22,18 @@ let f_ret_normal status_code _ =
 let f_ret_sig signo _ =
   set_signal signo Signal_default;
   sleep 1;
-  Printf.printf "me: %d, p: %d\n" (getpid ()) (getppid ());
+  Logs.debug (fun m -> m "me: %d, p: %d\n" (getpid ()) (getppid ()));
   kill (getpid ()) sigterm;
   exit 1 (* should not happen! *)
 
 let test_ret_normal _ =
-  Printf.printf "test_ret_normal: %d, p: %d\n" (getpid ()) (getppid ());
+  Logs.debug (fun m -> m "test_ret_normal: %d, p: %d" (getpid ()) (getppid ()));
   let assert_equal_status status_code =
     assert_equal (WEXITED status_code) (supervise (f_ret_normal status_code))
   in List.iter assert_equal_status status_codes
 
 let test_ret_sig _ =
-  Printf.printf "test_ret_sig: %d, p: %d\n" (getpid ()) (getppid ());
+  Logs.debug (fun m -> m "test_ret_sig: %d, p: %d" (getpid ()) (getppid ()));
   let assert_signal_status signo =
     assert_equal (WSIGNALED signo) (supervise (f_ret_sig signo))
   in List.iter assert_signal_status kill_signals

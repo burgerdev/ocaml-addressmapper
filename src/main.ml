@@ -1,10 +1,7 @@
 open Unix
-open Cmdliner
 
 let bin_name = "address-mapping-server"
-let bin_version = "0.5"
-
-let logc = out_channel_of_descr stderr
+let bin_version = "0.6"
 
 let extract_rules filename_opt =
   match filename_opt with
@@ -40,15 +37,15 @@ let handler rules_getter ic oc =
       let email = parse_email input in
       match email with
       | None ->
-        Printf.fprintf logc "Error: malformed request [%s]\n" input;
+        Logs.warn (fun m -> m "Malformed request [%s]" input);
         Malformed
       | Some a ->
         match Mapper.apply (rules_getter ()) a with
         | Some b ->
-          Printf.fprintf logc "Info: found mapping of [%s] to [%s].\n" a b;
+          Logs.info (fun m -> m "Found mapping of [%s] to [%s]." a b);
           Found b
         | None ->
-          Printf.fprintf logc "Info: no mapping found for [%s].\n" a;
+          Logs.info (fun m -> m "No mapping found for [%s]." a);
           Not_found
     in
     output_string oc (message_of_status s);
@@ -58,9 +55,9 @@ let handler rules_getter ic oc =
     handle_single_request ()
   with
   | End_of_file ->
-    Printf.fprintf logc "Info: client closed the connection.\n"
+    Logs.info (fun m -> m "Client closed the connection.")
 
-let main host port rules_file update_rules =
+let main host port rules_file update_rules _ =
   let rules_getter =
     if update_rules then
       let f () = extract_rules rules_file in f
@@ -68,11 +65,26 @@ let main host port rules_file update_rules =
       let rules = extract_rules rules_file in
       let f () = rules in f
   in
-  Printf.fprintf logc "Establishing server at %s:%d.\n" host port; flush logc;
+  Logs.app (fun m -> m "Establishing server at %s:%d." host port);
+  Logs.debug (fun m -> m "updating rules: %B." update_rules);
   let local_addr = Unix.ADDR_INET(Unix.inet_addr_of_string host, port) in
   let serve_forever _ = establish_server (handler rules_getter) local_addr in
   Init.supervise serve_forever
 
+(* Logging stuff, copy pasta from docs *)
+
+let setup_log style_renderer level =
+  Fmt_tty.setup_std_outputs ?style_renderer ();
+  Logs.set_level level;
+  Logs.set_reporter (Logs_fmt.reporter ());
+  ()
+
+(* Command line interface *)
+
+open Cmdliner
+
+let log_term =
+  Term.(const setup_log $ Fmt_cli.style_renderer () $ Logs_cli.level ())
 
 (* Cmdliner stuff *)
 
@@ -92,7 +104,13 @@ let update_rules_term =
   let doc = "Read rules file for every request." in
   Arg.(value & flag & info ["u"; "update"] ~doc)
 
-let main_term = Term.(const main $ host_term $ port_term $ rules_term $ update_rules_term)
+let main_term = Term.(const main
+                     $ host_term
+                     $ port_term
+                     $ rules_term
+                     $ update_rules_term
+                     $ log_term
+                     )
 
 let info =
   let doc = "Run a configurable address mapping server for postfix." in

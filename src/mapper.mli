@@ -10,9 +10,18 @@ val apply: ('a, 'b) rule -> 'a -> 'b option
 (* first class rules *)
 (* ================= *)
 
-val bind: ('a, 'b) rule -> ('b -> 'c option) -> ('a, 'c) rule
+val and_then: ('a, 'b) rule -> ('b, 'c) rule -> ('a, 'c) rule
+(* [and_then r1 r2] creates a rule that applies [r1] to the input and, if r1
+   could be applied, applies [r1]'s output to [r2]. If [r1] does not apply,
+   [None] is returned. *)
+
+val or_else: ('a, 'b) rule -> ('a, 'b) rule -> ('a, 'b) rule
+(* [or_else r1 r2] creates a rule that applies [r1] to the input and, if r1
+   could not be applied, applies the input to [r2]. If [r2] does also not apply,
+   [None] is returned. *)
 
 val return: ('a -> 'b option) -> ('a, 'b) rule
+(* [return f] creates a rule from a function mapping input to optional output. *)
 
 (* short-hand for common use cases *)
 (* =============================== *)
