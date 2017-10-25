@@ -56,13 +56,13 @@ function docker_create {
 
 if [[ -n "$CI" ]]
 then
-    docker_make clean test
+    docker_make clean fetch_deps test
     docker_create
     docker start -a $container
     docker rm "$container"
 fi
 
-docker_make clean build
+docker_make clean fetch_deps build
 
 docker_create
 docker start -a "$container"
