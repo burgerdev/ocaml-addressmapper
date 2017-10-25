@@ -29,6 +29,6 @@ _build/test/%.native: test/%.ml $(SOURCES) $(TEST_SOURCES)
 	ocamlbuild $(FLAGS) -I src test/$*.native
 
 fetch_deps:
-	opam install -y ocamlfind ounit sexplib cmdliner
+	opam install -y ocamlfind ounit sexplib cmdliner logs fmt
 
 .PHONY: build all test test_init test_mapper test_parser clean fetch_deps

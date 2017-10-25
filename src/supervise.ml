@@ -1,38 +1,38 @@
 open Unix
-open Cmdliner
 
 let bin_name = "supervise"
 let bin_version = "0.6"
 
-let logc = out_channel_of_descr stderr
-
-let logNow s =
-  Printf.fprintf logc "[%d] %s\n" (getpid ()) s; flush logc
-
-
-let main c prog argv =
-  let rec child _ =
+let main c prog argv _ =
+  let child _ =
     execv prog (Array.of_list argv)
   in
   match argv with
   | [] ->
-    Printf.fprintf logc "Empty argument vector not allowed!";
+    Logs.err (fun m -> m "Empty argument vector not allowed!");
     exit 1
   | _ :: t ->
-    Printf.fprintf logc "Supervising effective command line: [%s" prog;
-    (* supervise_exec prog args *)
-    let rec aux = function
-      | [] ->
-        Printf.fprintf logc "].\n";
-        flush logc;
-        Init.supervise ~cleanup:c child
-      | h :: t ->
-        Printf.fprintf logc " '%s'" h;
-        aux t
-    in aux t
+    let log_args _ =
+      let quoted = List.map (fun s -> Printf.sprintf "'%s'" s) t in
+      String.concat " " (prog :: quoted)
+    in Logs.debug
+      (fun m -> m "Supervising effective command line: [%s]" (log_args ()));
+    Init.supervise ~cleanup:c child
 
+(* Logging stuff, copy pasta from docs *)
+
+let setup_log style_renderer level =
+  Fmt_tty.setup_std_outputs ?style_renderer ();
+  Logs.set_level level;
+  Logs.set_reporter (Logs_fmt.reporter ());
+  ()
 
 (* Cmdliner stuff *)
+
+open Cmdliner
+
+let log_term =
+  Term.(const setup_log $ Fmt_cli.style_renderer () $ Logs_cli.level ())
 
 let cleanup_parser = function
   | "g" -> Ok Init.Kill_group
@@ -62,7 +62,7 @@ let args_term =
   let doc = "Program arguments. The first argument should be the program's name (argv[0])." in
   Arg.(non_empty & pos_right 0 string [] & info [] ~docv:"ARG" ~doc)
 
-let main_term = Term.(const main $ cleanup_term $ prog_term $ args_term)
+let main_term = Term.(const main $ cleanup_term $ prog_term $ args_term $ log_term)
 
 let info_term =
   let doc = "Supervise a process like a real init process would." in
