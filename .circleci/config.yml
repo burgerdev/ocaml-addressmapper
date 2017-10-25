@@ -11,12 +11,14 @@ jobs:
           command: |
             export TERM=dumb
             eval `opam config env`
+            make fetch_deps
             make build
       - run:
           name: "Test"
           command: |
             export TERM=dumb
             eval `opam config env`
+            make fetch_deps
             make test
       - store_artifacts:
           path: /tmp/oam/_build/src/main.native
@@ -64,12 +66,14 @@ jobs:
           command: |
             export TERM=dumb
             eval `opam config env`
+            make fetch_deps
             make build
       - run:
           name: "Test"
           command: |
             export TERM=dumb
             eval `opam config env`
+            make fetch_deps
             make test
       - store_artifacts:
           path: /tmp/oam/_build/src/main.native
