@@ -1,4 +1,4 @@
-type ('a, 'b) rule = Rule of ('a -> 'b option)
+type rule = Rule of (string -> string option)
 
 let return_nolog f = Rule f
 
