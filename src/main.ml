@@ -60,13 +60,18 @@ let handler rules_getter ic oc =
 let main host port rules_file update_rules _ =
   let rules_getter =
     if update_rules then
-      let f () = extract_rules rules_file in f
+      begin
+        Logs.debug (fun m -> m "Parsing rules for each request.");
+        let f () = extract_rules rules_file in f
+      end
     else
-      let rules = extract_rules rules_file in
-      let f () = rules in f
+      begin
+        Logs.debug (fun m -> m "Parsing rules once.");
+        let rules = extract_rules rules_file in
+        let f () = rules in f
+      end
   in
   Logs.app (fun m -> m "Establishing server at %s:%d." host port);
-  Logs.debug (fun m -> m "updating rules: %B." update_rules);
   let local_addr = Unix.ADDR_INET(Unix.inet_addr_of_string host, port) in
   let serve_forever _ = establish_server (handler rules_getter) local_addr in
   Init.supervise serve_forever
@@ -97,7 +102,7 @@ let port_term =
   Arg.(value & opt int 30303 & info ["p"; "port"] ~docv:"PORT" ~doc)
 
 let rules_term =
-  let doc = "File containing mapping rules [NOT IMPLEMENTED]." in
+  let doc = "File containing mapping rules. Consult the repository documentation for details." in
   Arg.(value & opt (some string) None & info ["r"; "rules"] ~docv:"RULES-FILE" ~doc)
 
 let update_rules_term =
