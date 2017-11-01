@@ -1,30 +1,34 @@
 type rule = Rule of (string -> string option)
 
-let return_nolog f = Rule f
-
-let default_fmt _ = "<?>"
-let default_fmt_opt = function
-  | Some _ -> "Some(<?>)"
-  | None -> "None"
-
-let return_named
-    ?fmt_input:(fi: ('a -> string)=default_fmt)
-    ?fmt_output:(fo: ('b option -> string)=default_fmt_opt)
-    name (f: 'a -> 'b option) =
+let label name rule =
+  let (Rule f) = rule in
   let f_with_log x =
-    let y = f x in
-    Logs.debug (fun m -> m "Applied [%s]: mapped [%s] to [%s]" name (fi x) (fo y));
-    y
-  in return_nolog f_with_log
+    let y_opt = f x in
+    begin
+      match y_opt with
+      | Some y ->
+        Logs.debug (fun m -> m "Rule [%s]: mapped [%s] to [%s]" name x y)
+      | None ->
+        Logs.debug (fun m -> m "Rule [%s]: did not apply to [%s]" name x)
+    end;
+    y_opt
+  in Rule f_with_log
 
-let return_named_string name =
-  let fi x = x in
-  let fo = function
-    | Some s -> Printf.sprintf "Some(%s)" s
-    | None -> "None"
-  in return_named ~fmt_input:fi ~fmt_output:fo name
+let label_quietly name rule =
+  let (Rule f) = rule in
+  let f_with_log x =
+    let y_opt = f x in
+    begin
+      match y_opt with
+      | Some _ ->
+        Logs.debug (fun m -> m "Rule [%s]: applied." name)
+      | None ->
+        Logs.debug (fun m -> m "Rule [%s]: did not apply." name)
+    end;
+    y_opt
+  in Rule f_with_log
 
-let return f = return_named "<anonymous mapper>" f
+let return f = Rule f
 
 let apply r a =
   let (Rule f) = r in f a
@@ -33,40 +37,38 @@ let and_then r1 r2 =
   let g_after_f input = match apply r1 input with
     | None -> None
     | Some x -> apply r2 x
-  in return_nolog g_after_f
+  in return g_after_f
 
 let or_else r1 r2 =
   let g_after_f input = match apply r1 input with
     | None -> apply r2 input
     | Some x -> Some x
-  in return_nolog g_after_f
+  in return g_after_f
 
 let accept =
-  let log _ = Logs.debug (fun m -> m "Applied [accept].") in
-  Rule (fun x -> log (); Some x)
-
-let accept_nolog = Rule (fun x -> Some x)
+  let rule = return (fun x -> Some x) in
+  label_quietly "accept" rule
 
 let reject =
-  let log _ = Logs.debug (fun m -> m "Applied [reject].") in
-  Rule (fun _ -> log (); None)
-
-let reject_nolog = Rule (fun _ -> None)
+  let rule = return (fun _ -> None) in
+  label_quietly "reject" rule
 
 let all rules =
-  let rule = List.fold_left and_then accept_nolog rules in
-  return_named "all" (apply rule)
+  let init = return (fun x -> Some x) in
+  let rule = List.fold_left and_then init rules in
+  label_quietly "all" rule
 
 let first rules =
-  let rule = List.fold_left or_else reject_nolog rules in
-  return_named "first" (apply rule)
+  let init = return (fun _ -> None) in
+  let rule = List.fold_left or_else init rules in
+  label_quietly "first" rule
 
 let not rule =
   let invert input =
     match apply rule input with
     | Some _ -> None
     | None -> Some input
-  in return_named "not" invert
+  in label_quietly "not" (return invert)
 
 let matches pattern =
   let re = (Str.regexp pattern) in
@@ -76,7 +78,7 @@ let matches pattern =
       Some input
     with
     | Not_found -> None
-  in return_named_string (Printf.sprintf "matches(\"%s\")" pattern) handler
+  in label (Printf.sprintf "matches(\"%s\")" pattern) (return handler)
 
 let prefix_matches prefix =
   let n = String.length prefix in
@@ -85,7 +87,7 @@ let prefix_matches prefix =
       Some input
     else
       None
-  in return_named_string (Printf.sprintf "prefix_matches(\"%s\")" prefix) handler
+  in label (Printf.sprintf "prefix_matches(\"%s\")" prefix) (return handler)
 
 let suffix_matches suffix =
   let n = String.length suffix in
@@ -95,16 +97,13 @@ let suffix_matches suffix =
       Some input
     else
       None
-  in return_named_string (Printf.sprintf "suffix_matches(\"%s\")" suffix) handler
+  in label (Printf.sprintf "suffix_matches(\"%s\")" suffix) (return handler)
 
 let replace pattern replacement =
   let repl = Str.replace_first (Str.regexp pattern) replacement in
   let handler input = Some (repl input) in
-  return_named_string (Printf.sprintf "replace(\"%s\", \"%s\")" pattern replacement) handler
+  label (Printf.sprintf "replace(\"%s\", \"%s\")" pattern replacement) (return handler)
 
-let lower = return_named_string "lower" (fun input -> Some (String.lowercase_ascii input))
-let upper = return_named_string "upper" (fun input -> Some (String.uppercase_ascii input))
-let constant c = return_named_string "constant" (fun _ -> Some c)
-let constant c =
-  let log _ = Logs.debug (fun m -> m "Applied [constant].") in
-  Rule (fun _ -> log (); Some c)
+let lower = label "lower" (return (fun input -> Some (String.lowercase_ascii input)))
+let upper = label "upper" (return (fun input -> Some (String.uppercase_ascii input)))
+let constant c = label "constant" (return (fun _ -> Some c))
