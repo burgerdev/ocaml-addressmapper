@@ -1,6 +1,11 @@
 open Unix
 open Sys
 
+let pid_tag =
+  Logs.Tag.def "pid" ~doc:"process id" (fun m -> Format.fprintf m "%d")
+
+let get_pid_tag _ = Logs.Tag.(empty |> add pid_tag (getpid ()))
+
 (* Why is this not part of Unix? *)
 let string_of_signal = function
   | i when i = sigint -> "SIGINT"
@@ -20,10 +25,11 @@ let rec supervise_pid n =
       begin
         match cause with
         | WEXITED status_code ->
-          Logs.info (fun m -> m "Child exited with [%d]." status_code);
+          Logs.info (fun m -> m "Child exited with [%d]." status_code ~tags:(get_pid_tag ()));
           cause
         | WSIGNALED signo ->
-          Logs.info (fun m -> m "Child terminated with signal [%s]." (string_of_signal signo));
+          let s = string_of_signal signo in
+          Logs.info (fun m -> m "Child terminated with signal [%s]." s ~tags:(get_pid_tag ()));
           cause
         | _ ->
           (* ignore stopped *)
@@ -38,12 +44,11 @@ let rec supervise_pid n =
     supervise_pid n
 
 let deliver_signal to_whom signo =
-  let p = getpid () in
   let s = string_of_signal signo in
-  Logs.debug (fun m -> m "[%d]: Forwarding signal [%s] to [%d]." p s to_whom);
+  Logs.debug (fun m -> m "Forwarding signal [%s] to [%d]." s to_whom ~tags:(get_pid_tag ());
   try kill to_whom signo with
   | Unix_error (ESRCH, _, _) ->
-    Logs.warn (fun m -> m "[%d]: Could not deliver signal [%s] to lost child [%d]." p s to_whom)
+    Logs.warn (fun m -> m "Could not deliver signal [%s] to lost child [%d]." s to_whom ~tags:(get_pid_tag ())))
 
 let supervise f =
   match fork () with
@@ -54,7 +59,7 @@ let supervise f =
        traditional 0 to indicate this to the caller. *)
     exit 0
   | n ->
-    Logs.info (fun m -> m "[%d]: Supervising [%d]." (getpid ()) n);
+    Logs.info (fun m -> m "Supervising [%d]." n ~tags:(get_pid_tag ()));
     let handler = deliver_signal n in
     set_signal sigint (Signal_handle handler);
     set_signal sigterm (Signal_handle handler);
