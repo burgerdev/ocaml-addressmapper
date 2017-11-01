@@ -2,9 +2,9 @@ FLAGS=-use-ocamlfind
 SOURCES=src/main.ml src/mapper.ml src/mapper.mli src/init.ml src/init.mli src/parser.ml src/parser.mli
 TEST_SOURCES=test/test_mapper.ml
 
-build: _build/src/main.native _build/src/supervise.native
-
 all: build test
+
+build: _build/src/main.native _build/src/supervise.native
 
 test: test_init test_mapper test_parser
 
