@@ -23,6 +23,10 @@ val or_else: rule -> rule -> rule
 val return: (string -> string option) -> rule
 (* [return f] creates a rule from a function mapping input to optional output. *)
 
+val label: string -> rule -> rule
+(* [label n r] creates a new rule extending [r] with debug logging under
+   identifier [n]. *)
+
 (* short-hand for common use cases *)
 (* =============================== *)
 
