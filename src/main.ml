@@ -49,6 +49,7 @@ let handler rules_getter ic oc =
           Not_found
     in
     output_string oc (message_of_status s);
+    flush oc;
     handle_single_request ()
   in
   try
