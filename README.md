@@ -3,7 +3,7 @@
 # OCaml-AddressMapper
 
 Implementation of a [postfix tcp lookup table][1] that transforms the
-requested address according to a confiugrable set of mapping rules. A common
+requested address according to a configurable set of mapping rules. A common
 use case is to transform an address to a canonical form.
 
 Built-in mapping rules are `accept`, `reject`, `match` a regular expression
