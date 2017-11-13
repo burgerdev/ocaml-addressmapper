@@ -2,7 +2,7 @@ open Unix
 open Server
 
 let bin_name = "address-mapping-server"
-let bin_version = "0.7"
+let bin_version = "0.8"
 
 let extract_rules filename_opt =
   match filename_opt with
