@@ -1,4 +1,5 @@
 open Unix
+open Server
 
 let bin_name = "address-mapping-server"
 let bin_version = "0.7"
@@ -11,46 +12,47 @@ let extract_rules filename_opt =
     let s = Sexplib.Sexp.input_sexp ic in
     Parser.rule_of_sexp s
 
-let parse_email s =
-  try
-    Scanf.sscanf s "get %s" (fun x -> Some x)
-  with
-  | Scanf.Scan_failure(_) -> None
-
-type status =
-  | Malformed
-  | Not_found
-  | Error
-  | Found of string
-
-let message_of_status s =
-  match s with
-  | Malformed -> "400 malformed request\n"
-  | Error -> "500 internal server error\n"
-  | Not_found -> "500 not-found\n"
-  | Found s -> Format.sprintf "200 %s\n" s
-
 let handler rules_getter ic oc =
   let rec handle_single_request _ =
-    let s =
+    let response =
       let input = input_line ic in
-      let email = parse_email input in
-      match email with
-      | None ->
-        Logs.warn (fun m -> m "Malformed request [%s]" input);
+      match request_of_string input with
+      | Invalid a ->
+        Logs.warn (fun m -> m "Malformed request [%s]" a);
         Malformed
-      | Some a ->
-        match Mapper.apply (rules_getter ()) a with
-        | Some b ->
-          Logs.info (fun m -> m "Found mapping of [%s] to [%s]." a b);
-          Found b
-        | None ->
-          Logs.info (fun m -> m "No mapping found for [%s]." a);
-          Not_found
+      | Get a ->
+        begin
+          try
+            match Mapper.apply (rules_getter ()) a with
+            | Some b ->
+              Logs.info (fun m -> m "Found mapping of [%s] to [%s]." a b);
+              Found b
+            | None ->
+              Logs.info (fun m -> m "No mapping found for [%s]." a);
+              Not_found
+          with
+          | e ->
+            Logs.err (fun m -> m "Internal error.");
+            Internal_error e
+        end
+      | Put a ->
+        Logs.warn (fun m -> m "Unsupported put request [%s]" a);
+        Unsupported
+      | Health ->
+        try
+          ignore (rules_getter ());
+          Health Rules_ok
+        with
+        | _ ->
+          Logs.err (fun m -> m "Internal error.");
+          Health Rules_error
+
     in
-    output_string oc (message_of_status s);
+    output_string oc (string_of_response response);
     flush oc;
-    handle_single_request ()
+    match response with
+    | Internal_error e -> raise e
+    | _ -> handle_single_request ()
   in
   try
     handle_single_request ()
