@@ -58,7 +58,7 @@ let handler rules_getter ic oc =
     handle_single_request ()
   with
   | End_of_file ->
-    Logs.info (fun m -> m "Client closed the connection.")
+    Logs.debug (fun m -> m "Client closed the connection.")
 
 let main host port rules_file update_rules _ =
   let rules_getter =
@@ -74,7 +74,7 @@ let main host port rules_file update_rules _ =
         let f () = rules in f
       end
   in
-  Logs.app (fun m -> m "Establishing server at %s:%d." host port);
+  Logs.info (fun m -> m "Establishing server at %s:%d." host port);
   let local_addr = Unix.ADDR_INET(Unix.inet_addr_of_string host, port) in
   let serve_forever _ = establish_server (handler rules_getter) local_addr in
   Init.supervise serve_forever

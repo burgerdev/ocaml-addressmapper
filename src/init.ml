@@ -29,7 +29,7 @@ let rec supervise_pid n =
           cause
         | WSIGNALED signo ->
           let s = string_of_signal signo in
-          Logs.info (fun m -> m "Child terminated with signal [%s]." s ~tags:(get_pid_tag ()));
+          Logs.info (fun m -> m "Child killed by signal [%s]." s ~tags:(get_pid_tag ()));
           cause
         | _ ->
           (* ignore stopped *)
