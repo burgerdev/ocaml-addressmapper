@@ -7,28 +7,11 @@ type rule
 val apply: rule -> string -> string option
 (* [apply r i] applies rule [r] to input [i] *)
 
-(* first class rules *)
-(* ================= *)
+(* Constructing Rules *)
+(* ================== *)
 
-val and_then: rule -> rule -> rule
-(* [and_then r1 r2] creates a rule that applies [r1] to the input and, if r1
-   could be applied, applies [r1]'s output to [r2]. If [r1] does not apply,
-   [None] is returned. *)
-
-val or_else: rule -> rule -> rule
-(* [or_else r1 r2] creates a rule that applies [r1] to the input and, if r1
-   could not be applied, applies the input to [r2]. If [r2] does also not apply,
-   [None] is returned. *)
-
-val return: (string -> string option) -> rule
-(* [return f] creates a rule from a function mapping input to optional output. *)
-
-val label: string -> rule -> rule
-(* [label n r] creates a new rule extending [r] with debug logging under
-   identifier [n]. *)
-
-(* short-hand for common use cases *)
-(* =============================== *)
+val rule_of_sexp: Sexplib.Sexp.t -> rule
+(* [rule_of_sexp s] parses [s] according to the documented grammar *)
 
 val accept: rule
 (* a rule that always returns the input string *)
@@ -68,3 +51,8 @@ val first: rule list -> rule
 val not: rule -> rule
 (* [not r] returns the input if [r] returns [None], otherwise it returns
    [None] *)
+
+(* utilities *)
+(* ========= *)
+
+val log_src: Logs.src

@@ -1,5 +1,5 @@
 open OUnit
-open Parser
+open Mapper
 
 let test_sexp_string _ =
   let all_rules =
