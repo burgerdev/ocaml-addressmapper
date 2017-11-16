@@ -6,15 +6,16 @@ let test_string_dot = "test.string"
 
 let apply_test r = apply r test_string
 
+let pp_opt = function
+  | Some x -> Format.sprintf "Some(%s)" x
+  | None -> Format.sprintf "None"
+
 let assert_equal expected actual =
+  let msg = Format.sprintf "expected [%s], actual [%s]" (pp_opt expected) (pp_opt actual) in
   match (expected, actual) with
-  | Some e, None ->
-    failwith (Printf.sprintf "expected: Some %s, actual: None" e)
-  | None, Some a ->
-    failwith (Printf.sprintf "expected: None, actual: Some %s" a)
-  | Some e, Some a when String.compare e a != 0 ->
-    failwith (Printf.sprintf "expected: Some %s, actual: Some %s" e a)
-  | _ -> ()
+  | None, None -> ()
+  | Some a, Some b when String.compare a b == 0 -> ()
+  | _ -> failwith msg
 
 let must_transform ?input_string:(input_string=test_string) output_string rule =
   assert_equal (Some output_string) (apply rule input_string)
