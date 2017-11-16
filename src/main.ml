@@ -10,7 +10,7 @@ let extract_rules filename_opt =
   | Some filename ->
     let ic = open_in filename in
     let s = Sexplib.Sexp.input_sexp ic in
-    Parser.rule_of_sexp s
+    Mapper.rule_of_sexp s
 
 let handler rules_getter ic oc =
   let rec handle_single_request _ =
