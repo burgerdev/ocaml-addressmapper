@@ -93,7 +93,7 @@ docker run -d -p 30303:30303 -v /tmp/rules.sexp:/rules.sexp:ro burgerdev/ocaml-a
                 (matches "^pr@.*"))
         )
       )
-      (matches "^donations@nonprofit\.org$")
+      (equals "donations@nonprofit.org")
     )
   )
 )
