@@ -28,6 +28,9 @@ val upper: rule
 val matches: string -> rule
 (* [matches a] returns the input iff it matches regex [a] *)
 
+val equals: string -> rule
+(* [equals a] returns the input iff it exactly equals [a] *)
+
 val prefix_matches: string -> rule
 (* [prefix_matches p] returns the input iff string [p] is a prefix of input *)
 

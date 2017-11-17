@@ -14,6 +14,7 @@ and combination =
   | Not of rule
 and terminal =
   | Accept | Reject | Lower | Upper
+  | Equals of string
   | Matches of string
   | Replace of string * string
   | Constant of string
@@ -81,6 +82,8 @@ let apply_terminal n terminal input =
   | Reject -> None
   | Lower -> Some (String.lowercase_ascii input)
   | Upper -> Some (String.uppercase_ascii input)
+  | Equals s when s = input -> Some s
+  | Equals _ -> None
   | Matches pattern ->
     begin
       try
@@ -129,6 +132,7 @@ let terminal_of_sexp = function
     begin
       match r with
       | "matches" -> Matches s
+      | "equals" -> Equals s
       | "constant" -> Constant s
       | "prefix_matches" -> Prefix s
       | "suffix_matches" -> Suffix s
@@ -188,6 +192,8 @@ let first rules = Combination (First rules)
 let not rule = Combination (Not rule)
 
 let matches pattern = Terminal (Matches pattern)
+
+let equals other = Terminal (Equals other)
 
 let replace pattern replacement = Terminal (Replace (pattern, replacement))
 
