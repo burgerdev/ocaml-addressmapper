@@ -19,6 +19,7 @@ transformation-rule   = '(', matches-rule | replace-rule | constant-rule, ')';
 matches-rule          = 'matches', white-space, regexp-literal;
 replace-clause        = 'replace', white-space, regexp-literal, white-space, string-literal;
 constant-rule         = 'constant', white-space, string-literal;
+equals-rule           = 'equals', white-space, string-literal;
 
 (* These rules consist of further, nested rules. *)
 combined-rule         = rule-list | first-rule | boolean-rule;
@@ -78,6 +79,8 @@ result. If it's a string, the result will be `200 <final-output>`, if it's
     the input is passed on unchanged.
   - `constant <literal>`:
     The input is replaced with the given string literal.
+  - `equals <literal>`:
+    The input is accepted iff it is exactly equal to the given string literal.
 
 ### Combinations
 

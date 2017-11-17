@@ -11,6 +11,10 @@ let test_sexp_string _ =
               ((first ()) || (replace \"baz\" \"foo\"))
              )
              (replace \".*\" \"moo\")
+             (first (
+                     (equals \"foo\")
+                     (equals \"moo\")
+             ))
             )
      )" in
   let rule = rule_of_sexp (Sexplib.Sexp.of_string all_rules) in
@@ -33,7 +37,7 @@ let test_documentation _ =
                 (matches \"^pr@.*\"))
         )
       )
-      (matches \"^donations@nonprofit\\.org$\")
+      (equals \"donations@nonprofit.org\")
     )
   )
 )
