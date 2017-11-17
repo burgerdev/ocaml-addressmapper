@@ -23,17 +23,26 @@ and terminal =
 
 let log_src = Logs.Src.create "mapper"
 
-let log_debug f = Logs.debug ?src:(Some log_src) f
+module Mapper_log = (val (Logs.src_log log_src))
 
 let pp_combination ppf = function
   | All _ -> Format.fprintf ppf "all"
   | First _ -> Format.fprintf ppf "first"
-  | _ -> Format.fprintf ppf "<?>" (* TODO *)
+  | And _ -> Format.fprintf ppf "and"
+  | Or _ -> Format.fprintf ppf "or"
+  | Not _ -> Format.fprintf ppf "not"
 
 let pp_terminal ppf = function
   | Accept -> Format.fprintf ppf "accept"
   | Reject -> Format.fprintf ppf "reject"
-  | _ -> Format.fprintf ppf "<?>"
+  | Lower -> Format.fprintf ppf "lower"
+  | Upper -> Format.fprintf ppf "upper"
+  | Constant _ -> Format.fprintf ppf "constant"
+  | Equals _ -> Format.fprintf ppf "equals"
+  | Matches _ -> Format.fprintf ppf "matches"
+  | Replace _ -> Format.fprintf ppf "replace"
+  | Prefix _ -> Format.fprintf ppf "prefix_matches"
+  | Suffix _ -> Format.fprintf ppf "suffix_matches"
 
 let pp_opt ppf = function
   | Some x -> Format.fprintf ppf "Some(%s)" x
@@ -59,7 +68,7 @@ let apply_combination n apply_rule combination input =
     | Some x -> raise (Stop_evaluating (Some x)) in
 
   let fmt = indent n "Evaluating combination [%a] on [%s]:" in
-  log_debug (fun m -> m fmt pp_combination combination input);
+  Mapper_log.debug (fun m -> m fmt pp_combination combination input);
 
   let result =
     try
@@ -73,7 +82,7 @@ let apply_combination n apply_rule combination input =
         | Some _ -> None
         | None -> Some input
     with Stop_evaluating r -> r  in
-  log_debug (fun m -> m (indent n "Got %a.") pp_opt result);
+  Mapper_log.debug (fun m -> m (indent n "Got %a.") pp_opt result);
   result
 
 let apply_terminal n terminal input =
@@ -111,7 +120,7 @@ let apply_terminal n terminal input =
   in
 
   let fmt = indent n "rule [%a] mapped [%s] to [%a]" in
-  log_debug (fun m -> m fmt pp_terminal terminal input pp_opt result);
+  Mapper_log.debug (fun m -> m fmt pp_terminal terminal input pp_opt result);
   result
 
 let apply rule input =
