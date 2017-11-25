@@ -1,6 +1,8 @@
 
 open Sexplib
 
+open Fmt
+
 (* Grammar *)
 
 type rule =
@@ -25,28 +27,36 @@ let log_src = Logs.Src.create "mapper"
 
 module Mapper_log = (val (Logs.src_log log_src))
 
-let pp_combination ppf = function
-  | All _ -> Format.fprintf ppf "all"
-  | First _ -> Format.fprintf ppf "first"
-  | And _ -> Format.fprintf ppf "and"
-  | Or _ -> Format.fprintf ppf "or"
-  | Not _ -> Format.fprintf ppf "not"
+let string_of_combination = function
+  | All _ -> "all (...)"
+  | First _ -> "first (...)"
+  | And _ -> "and (?, ?)"
+  | Or _ -> "or (?, ?)"
+  | Not _ -> "not ?"
 
-let pp_terminal ppf = function
-  | Accept -> Format.fprintf ppf "accept"
-  | Reject -> Format.fprintf ppf "reject"
-  | Lower -> Format.fprintf ppf "lower"
-  | Upper -> Format.fprintf ppf "upper"
-  | Constant _ -> Format.fprintf ppf "constant"
-  | Equals _ -> Format.fprintf ppf "equals"
-  | Matches _ -> Format.fprintf ppf "matches"
-  | Replace _ -> Format.fprintf ppf "replace"
-  | Prefix _ -> Format.fprintf ppf "prefix_matches"
-  | Suffix _ -> Format.fprintf ppf "suffix_matches"
+let pp_combination = of_to_string string_of_combination
 
-let pp_opt ppf = function
-  | Some x -> Format.fprintf ppf "Some(%s)" x
-  | None -> Format.fprintf ppf "None"
+let string_of_terminal = function
+  | Accept -> "accept"
+  | Reject -> "reject"
+  | Lower -> "lower"
+  | Upper -> "upper"
+  | Constant s -> strf "constant \"%s\"" s
+  | Equals s -> strf "equals \"%s\"" s
+  | Matches s -> strf "matches \"%s\"" s
+  | Replace (a, b) -> strf "replace \"%s\" \"%s\"" a b
+  | Prefix s -> strf "prefix_matches \"%s\"" s
+  | Suffix s -> strf "suffix_matches \"%s\"" s
+
+let pp_terminal = of_to_string string_of_terminal
+
+let string_of_rule = function
+  | Combination c -> string_of_combination c
+  | Terminal t -> string_of_terminal t
+
+let pp_rule = of_to_string string_of_rule
+
+let pp_opt = option string
 
 let rec indent n fmt =
   if n = 0 then
