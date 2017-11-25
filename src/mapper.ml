@@ -23,6 +23,8 @@ and terminal =
   | Prefix of string
   | Suffix of string
 
+type t = rule
+
 let log_src = Logs.Src.create "mapper"
 
 module Mapper_log = (val (Logs.src_log log_src))
@@ -55,6 +57,7 @@ let string_of_rule = function
   | Terminal t -> string_of_terminal t
 
 let pp_rule = of_to_string string_of_rule
+let pp = pp_rule
 
 let pp_opt = option string
 
@@ -199,6 +202,8 @@ let rule_of_sexp sexp =
   with
   | Stop_parsing sexp ->
     Conv.of_sexp_error "could neither parse terminal nor combination" sexp
+
+let t_of_sexp = rule_of_sexp
 
 let accept = Terminal Accept
 

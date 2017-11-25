@@ -1,8 +1,12 @@
-(* rule evaluation *)
+(* Rule Evaluation *)
 (* =============== *)
 
 type rule
-(* a rule maps an input string to an optional output string *)
+(* the abstract type [rule] encodes how to map an input string to an optional
+   output string *)
+
+type t = rule
+(* [t] is the conventional alias for [rule] *)
 
 val apply: rule -> string -> string option
 (* [apply r i] applies rule [r] to input [i] *)
@@ -12,6 +16,9 @@ val apply: rule -> string -> string option
 
 val rule_of_sexp: Sexplib.Sexp.t -> rule
 (* [rule_of_sexp s] parses [s] according to the documented grammar *)
+
+val t_of_sexp: Sexplib.Sexp.t -> t
+(* [t_of_sexp] is an alias for [rule_of_sexp] *)
 
 val accept: rule
 (* a rule that always returns the input string *)
@@ -55,7 +62,15 @@ val not: rule -> rule
 (* [not r] returns the input if [r] returns [None], otherwise it returns
    [None] *)
 
-(* utilities *)
+(* Utilities *)
 (* ========= *)
 
 val log_src: Logs.src
+(* [log_src] is the [Logs.src] used by this module *)
+
+val pp_rule: Format.formatter -> rule -> unit
+(* [pp_rule ppf r] prints a summary of [r] to [ppf] (only the topmost rule is
+   shown if [r] is an aggregated rule) *)
+
+val pp: Format.formatter -> rule -> unit
+(* [pp] is an alias for [pp_rule] *)
