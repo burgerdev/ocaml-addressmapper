@@ -6,7 +6,7 @@ let string_of_percent_encoding request_string =
   |> Str.replace_matched "0x\\1"
   |> int_of_string
   |> char_of_int
-  |> Printf.sprintf "%c"
+  |> String.make 1
 
 let percent_decode =
   Str.global_substitute percent_encoding_re string_of_percent_encoding
