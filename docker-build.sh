@@ -108,11 +108,11 @@ then
     docker start $container
     sleep 2
 
-    assert_expected "health" "ok\n"
+    assert_expected "health" "200 ok\n"
 
     assert_expected "get abcd" "200 bbcd\n"
     assert_expected "get wxyz" "200 wxyz\n"
-    assert_expected "get aazz" "500 not-found\n"
+    assert_expected "get aazz" "500 not found\n"
 
     assert_expected "get ab0011856cd" "200 bbNUMBERScd\n"
     assert_expected "get ab0cd1" "200 bbNUMBERScd1\n"
