@@ -7,18 +7,19 @@ type request =
 
 val request_of_string: string -> request
 
-val string_of_request: request -> string
-
-type health =
-  | Rules_ok
-  | Rules_error
+val pp_request: request Fmt.t
 
 type response =
   | Malformed
   | Not_found
-  | Internal_error of exn
+  | Internal_error
   | Unsupported
   | Found of string
-  | Health of health
+  | Healthy
+  | Unhealthy
 
-val string_of_response: response -> string
+val pp_response: response Fmt.t
+
+val handle_request: (unit -> Mapper.rule) -> request -> response
+
+val serve: Format.formatter -> (unit -> Mapper.rule) -> string Stream.t -> unit

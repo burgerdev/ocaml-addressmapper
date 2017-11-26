@@ -33,7 +33,7 @@ let handler rules_getter ic oc =
           with
           | e ->
             Logs.err (fun m -> m "Internal error.");
-            Internal_error e
+            Internal_error
         end
       | Put a ->
         Logs.warn (fun m -> m "Unsupported put request [%s]" a);
@@ -41,18 +41,16 @@ let handler rules_getter ic oc =
       | Health ->
         try
           ignore (rules_getter ());
-          Health Rules_ok
+          Healthy
         with
         | _ ->
           Logs.err (fun m -> m "Internal error.");
-          Health Rules_error
+          Unhealthy
 
     in
-    output_string oc (string_of_response response);
+    output_string oc (Fmt.strf "%a\n" pp_response response);
     flush oc;
-    match response with
-    | Internal_error e -> raise e
-    | _ -> handle_single_request ()
+    handle_single_request ()
   in
   try
     handle_single_request ()
