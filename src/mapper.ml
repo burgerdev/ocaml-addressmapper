@@ -143,8 +143,6 @@ let apply rule input =
     | Terminal t -> apply_terminal depth t input
   in aux 0 rule input
 
-exception Sexp_error of string
-
 let terminal_of_sexp = function
   | Sexp.Atom "accept" -> Accept
   | Sexp.Atom "reject" -> Reject
@@ -170,9 +168,8 @@ let terminal_of_sexp = function
     end
   | s -> Conv.of_sexp_error "can't parse terminal rule of sexp" s
 
-exception Stop_parsing of Sexp.t
-
 let rule_of_sexp sexp =
+  let exception Stop_parsing of Sexp.t in
   let rec aux sexp =
     let combination_of_sexp = function
       | Sexp.List [left; Sexp.Atom "&&"; right] ->
