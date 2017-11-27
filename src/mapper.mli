@@ -81,3 +81,9 @@ val dump_rule: Format.formatter -> rule -> unit
 
 val dump: Format.formatter -> rule -> unit
 (* [dump] is an alias for [dump_rule] *)
+
+val sexp_of_rule: rule -> Sexplib.Sexp.t
+(* [sexp_of_rule rule] generates an S-expression of the given [rule]. *)
+
+val sexp_of_t: t -> Sexplib.Sexp.t
+(* [sexp_of_t] is an alias for [sexp_of_rule] *)

@@ -43,12 +43,12 @@ let string_of_terminal = function
   | Reject -> "reject"
   | Lower -> "lower"
   | Upper -> "upper"
-  | Constant s -> strf "constant \"%s\"" s
-  | Equals s -> strf "equals \"%s\"" s
-  | Matches s -> strf "matches \"%s\"" s
-  | Replace (a, b) -> strf "replace \"%s\" \"%s\"" a b
-  | Prefix s -> strf "prefix_matches \"%s\"" s
-  | Suffix s -> strf "suffix_matches \"%s\"" s
+  | Constant s -> strf "(constant \"%s\")" s
+  | Equals s -> strf "(equals \"%s\")" s
+  | Matches s -> strf "(matches \"%s\")" s
+  | Replace (a, b) -> strf "(replace \"%s\" \"%s\")" a b
+  | Prefix s -> strf "(prefix_matches \"%s\")" s
+  | Suffix s -> strf "(suffix_matches \"%s\")" s
 
 let pp_terminal = of_to_string string_of_terminal
 
@@ -70,32 +70,43 @@ let braced_list_of pp =
 
 let dump_terminal =
   pp_terminal
-  |> parens
   |> hbox
 
 let rec dump_rule ppf = function
   | Combination c -> dump_combination ppf c
   | Terminal t -> dump_terminal ppf t
 and dump_combination ppf c =
+  pf ppf "(";
   Format.pp_open_hovbox ppf 1;
   begin match c with
-    | All rules -> rules |> braced_list_of dump_rule @@ ppf
+    | All rules -> rules |> list ~sep:sp dump_rule @@ ppf
     | First rules -> pf ppf "first@ %a" (braced_list_of dump_rule) rules
     | And (l, r) -> pf ppf "@[<hov2>%a@ &&@ %a@]" dump_rule l dump_rule r
     | Or (l, r) -> pf ppf "@[<hov2>%a@ ||@ %a@]" dump_rule l dump_rule r
     | Not r -> pf ppf "@[<hov2>not@ %a@]" dump_rule r
   end;
-  Format.pp_close_box ppf ()
+  Format.pp_close_box ppf ();
+  pf ppf ")"
 
 let dump = dump_rule
 
-let rec indent n fmt =
+let rec indent n pp =
   if n = 0 then
-    fmt
+    pp
   else
-    indent (n - 1) ((format_of_string "| ") ^^ fmt)
+    indent (n - 1) @@ prefix (const string "| ") pp
 
 exception Stop_evaluating of string option
+
+let log_result n rule input output_opt =
+  let pp_msg = fun ppf () -> match output_opt with
+    | Some output ->
+      fmt "rule [%a] mapped [%s] to [%s]" ppf pp_rule rule input output
+    | None ->
+      fmt "rule [%a] rejected [%s]" ppf pp_rule rule input
+  in
+  let pp_msg = indent n pp_msg in
+  Mapper_log.debug @@ fun m -> m "%a" pp_msg ()
 
 let apply_combination n apply_rule combination input =
   let and_then result rule =
@@ -108,8 +119,11 @@ let apply_combination n apply_rule combination input =
     | None -> apply_rule rule input
     | Some x -> raise (Stop_evaluating (Some x)) in
 
-  let fmt = indent n "(%a) on [%s]:" in
-  Mapper_log.debug (fun m -> m fmt pp_combination combination input);
+  (* TODO improve indented logging *)
+  let pp_indent: unit Fmt.t = indent n @@ const string "" in
+  Mapper_log.debug (fun m ->
+      (m "%a(%a) on [%s]:")
+        pp_indent () pp_combination combination input);
 
   let result =
     try
@@ -122,8 +136,9 @@ let apply_combination n apply_rule combination input =
         match apply_rule rule input with
         | Some _ -> None
         | None -> Some input
-    with Stop_evaluating r -> r  in
-  Mapper_log.debug (fun m -> m (indent n "Got %a.") pp_opt result);
+    with Stop_evaluating r -> r
+  in
+  log_result n (Combination combination) input result;
   result
 
 let apply_terminal n terminal input =
@@ -160,8 +175,7 @@ let apply_terminal n terminal input =
       None
   in
 
-  let fmt = indent n "rule %a mapped [%s] to %a" in
-  Mapper_log.debug (fun m -> m fmt dump_terminal terminal input pp_opt result);
+  log_result n (Terminal terminal) input result;
   result
 
 let apply rule input =
@@ -229,6 +243,13 @@ let rule_of_sexp sexp =
     Conv.of_sexp_error "could neither parse terminal nor combination" sexp
 
 let t_of_sexp = rule_of_sexp
+
+(* TODO create sexp directly *)
+let sexp_of_rule rule =
+  strf "%a" dump rule
+  |> Sexplib.Sexp.of_string
+
+let sexp_of_t = sexp_of_rule
 
 let accept = Terminal Accept
 
