@@ -30,11 +30,11 @@ let log_src = Logs.Src.create "mapper"
 module Mapper_log = (val (Logs.src_log log_src))
 
 let string_of_combination = function
-  | All _ -> "all (...)"
-  | First _ -> "first (...)"
-  | And _ -> "and (?, ?)"
-  | Or _ -> "or (?, ?)"
-  | Not _ -> "not ?"
+  | All _ -> "all"
+  | First _ -> "first"
+  | And _ -> "and"
+  | Or _ -> "or"
+  | Not _ -> "not"
 
 let pp_combination = of_to_string string_of_combination
 
@@ -59,7 +59,35 @@ let string_of_rule = function
 let pp_rule = of_to_string string_of_rule
 let pp = pp_rule
 
-let pp_opt = option string
+let pp_opt =
+  brackets  string
+  |> option ~none:(unit "None")
+
+let braced_list_of pp =
+  list ~sep:sp pp
+  |> hvbox ~indent:1
+  |> parens
+
+let dump_terminal =
+  pp_terminal
+  |> parens
+  |> hbox
+
+let rec dump_rule ppf = function
+  | Combination c -> dump_combination ppf c
+  | Terminal t -> dump_terminal ppf t
+and dump_combination ppf c =
+  Format.pp_open_hovbox ppf 1;
+  begin match c with
+    | All rules -> rules |> braced_list_of dump_rule @@ ppf
+    | First rules -> pf ppf "first@ %a" (braced_list_of dump_rule) rules
+    | And (l, r) -> pf ppf "@[<hov2>%a@ &&@ %a@]" dump_rule l dump_rule r
+    | Or (l, r) -> pf ppf "@[<hov2>%a@ ||@ %a@]" dump_rule l dump_rule r
+    | Not r -> pf ppf "@[<hov2>not@ %a@]" dump_rule r
+  end;
+  Format.pp_close_box ppf ()
+
+let dump = dump_rule
 
 let rec indent n fmt =
   if n = 0 then
@@ -80,7 +108,7 @@ let apply_combination n apply_rule combination input =
     | None -> apply_rule rule input
     | Some x -> raise (Stop_evaluating (Some x)) in
 
-  let fmt = indent n "Evaluating combination [%a] on [%s]:" in
+  let fmt = indent n "(%a) on [%s]:" in
   Mapper_log.debug (fun m -> m fmt pp_combination combination input);
 
   let result =
@@ -132,8 +160,8 @@ let apply_terminal n terminal input =
       None
   in
 
-  let fmt = indent n "rule [%a] mapped [%s] to [%a]" in
-  Mapper_log.debug (fun m -> m fmt pp_terminal terminal input pp_opt result);
+  let fmt = indent n "rule %a mapped [%s] to %a" in
+  Mapper_log.debug (fun m -> m fmt dump_terminal terminal input pp_opt result);
   result
 
 let apply rule input =

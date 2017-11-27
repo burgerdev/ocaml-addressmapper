@@ -74,3 +74,10 @@ val pp_rule: Format.formatter -> rule -> unit
 
 val pp: Format.formatter -> rule -> unit
 (* [pp] is an alias for [pp_rule] *)
+
+val dump_rule: Format.formatter -> rule -> unit
+(* [dump_rule ppf r] dumps [r] in a format suitable for a rule file
+   (sexp-based). *)
+
+val dump: Format.formatter -> rule -> unit
+(* [dump] is an alias for [dump_rule] *)
