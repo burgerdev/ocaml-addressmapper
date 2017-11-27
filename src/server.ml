@@ -96,11 +96,10 @@ let handle_request create_rule = function
   | Health -> begin
       try
         let rule = create_rule () in
-        (* TODO use [dump rule], once available *)
-        Logs.debug (fun m -> m "@[<v2>current rules:@,%a@]" Mapper.pp_rule rule);
+        Logs.debug (fun m -> m "@[<v2>health check - current rules:@,%a@]" Mapper.dump_rule rule);
         Healthy
       with e ->
-        Logs.err (fun m -> m "@[<v2>health check error:@,%a@]" (Fmt.hbox Fmt.exn) e);
+        Logs.err (fun m -> m "@[<v2>health check - error:@,@[<hov2>%a@]@]" Fmt.exn e);
         Unhealthy
     end
   | Invalid req ->
