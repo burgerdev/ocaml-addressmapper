@@ -12,51 +12,31 @@ let extract_rules filename_opt =
     let s = Sexplib.Sexp.input_sexp ic in
     Mapper.rule_of_sexp s
 
-let handler rules_getter ic oc =
-  let rec handle_single_request _ =
-    let response =
-      let input = input_line ic in
-      match request_of_string input with
-      | Invalid a ->
-        Logs.warn (fun m -> m "Malformed request [%s]" a);
-        Malformed
-      | Get a ->
-        begin
-          try
-            match Mapper.apply (rules_getter ()) a with
-            | Some b ->
-              Logs.info (fun m -> m "Found mapping of [%s] to [%s]." a b);
-              Found b
-            | None ->
-              Logs.info (fun m -> m "No mapping found for [%s]." a);
-              Not_found
-          with
-          | e ->
-            Logs.err (fun m -> m "Internal error.");
-            Internal_error
-        end
-      | Put a ->
-        Logs.warn (fun m -> m "Unsupported put request [%s]" a);
-        Unsupported
-      | Health ->
-        try
-          ignore (rules_getter ());
-          Healthy
-        with
-        | _ ->
-          Logs.err (fun m -> m "Internal error.");
-          Unhealthy
+let line_stream_of_channel ic =
+  (* TODO no idea whether this is safe! *)
+  let getter _ =
+    try
+      Some (input_line ic)
+    with
+    | End_of_file -> None
+  in Stream.from getter
 
-    in
-    output_string oc (Fmt.strf "%a\n" pp_response response);
-    flush oc;
-    handle_single_request ()
-  in
-  try
-    handle_single_request ()
-  with
-  | End_of_file ->
-    Logs.debug (fun m -> m "Client closed the connection.")
+let pp_peer =
+  let string_of_ic ic =
+    Unix.descr_of_in_channel ic
+    |> Unix.getpeername
+    |> function
+    | ADDR_UNIX p -> Fmt.strf "unix:%s" p
+    | ADDR_INET (h, p) -> Fmt.strf "%s:%d" (Unix.string_of_inet_addr h) p
+  in Fmt.using string_of_ic Fmt.string
+
+let handler rules_getter ic oc =
+  Logs.debug (fun m -> m "Connection from %a" pp_peer ic);
+
+  let stream = line_stream_of_channel ic in
+  let ppf = Format.formatter_of_out_channel oc in
+  Server.serve ppf rules_getter stream;
+  Logs.debug (fun m -> m "Client closed the connection.")
 
 let main host port rules_file update_rules _ =
   let rules_getter =
