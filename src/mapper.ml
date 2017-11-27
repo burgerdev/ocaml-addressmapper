@@ -96,8 +96,6 @@ let rec indent n pp =
   else
     indent (n - 1) @@ prefix (const string "| ") pp
 
-exception Stop_evaluating of string option
-
 let log_result n rule input output_opt =
   let pp_msg = fun ppf () -> match output_opt with
     | Some output ->
@@ -109,6 +107,9 @@ let log_result n rule input output_opt =
   Mapper_log.debug @@ fun m -> m "%a" pp_msg ()
 
 let apply_combination n apply_rule combination input =
+
+  let exception Stop_evaluating of string option in
+
   let and_then result rule =
     match result with
     | None -> raise (Stop_evaluating None)
