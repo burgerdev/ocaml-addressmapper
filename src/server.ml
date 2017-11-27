@@ -1,4 +1,8 @@
 
+let log_src = Logs.Src.create "tcp-table-server"
+
+module Logs = (val (Logs.src_log log_src))
+
 let percent_encoding_re = Str.regexp "%\\([0-9a-f][0-9a-f]\\)"
 
 let percent_decode =
@@ -86,35 +90,41 @@ let pp_response =
   @@ Fmt.pair ~sep:Fmt.sp pp_response_code pp_response_msg
   |> Fmt.hbox
 
+let pp_addr = Fmt.hbox @@ Fmt.brackets Fmt.string
+
 let handle_request create_rule = function
   | Health -> begin
       try
-        ignore (create_rule ());
-        (* TODO log rule to debug *)
+        let rule = create_rule () in
+        (* TODO use [dump rule], once available *)
+        Logs.debug (fun m -> m "@[<v2>current rules:@,%a@]" Mapper.pp_rule rule);
         Healthy
-      with _ ->
-        (* TODO log to error *)
+      with e ->
+        Logs.err (fun m -> m "@[<v2>health check error:@,%a@]" (Fmt.hbox Fmt.exn) e);
         Unhealthy
     end
-  | Invalid _ ->
-    (* TODO log to info *)
+  | Invalid req ->
+    Logs.info (fun m -> m "@[<v2>invalid request:@,@[<h>%s@]@]" req);
     Malformed
-  | Put _ ->
-    (* TODO log to info *)
+  | Put _ as r ->
+    Logs.info (fun m -> m "@[<v2>unsupported request:@,%a@]" pp_request r);
     Unsupported
   | Get input ->
     try
       let rule = create_rule () in
       match Mapper.apply rule input with
-      | Some output -> Found output
-      | None -> Not_found
+      | Some output ->
+        Logs.info
+          (fun m -> m "Found mapping of %a to %a." pp_addr input pp_addr output);
+        Found output
+      | None ->
+        Logs.info
+          (fun m -> m "No mapping found for %a." pp_addr input);
+        Not_found
     with
-    | _ ->
-      (* TODO log to error *)
+    | e ->
+      Logs.err (fun m -> m "@[<v2>rule evaluation error:@,%a@]" Fmt.exn e);
       Internal_error
-
-let z (f: 'a -> 'b) (g: 'b -> 'c) (x: 'a) = g @@ f x
-
 
 let serve ppf create_rule stream =
   let f line =
