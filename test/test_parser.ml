@@ -1,22 +1,23 @@
 open OUnit
 open Mapper
 
+let all_rules =
+  "(first ((
+            (first (accept reject))
+            (not (matches \"foo\"))
+            (replace \"bar\" \"baz\")
+            ( (() && (prefix_matches \"ba\")) && (suffix_matches \"az\"))
+            ((first ()) || (replace \"baz\" \"foo\"))
+           )
+           (replace \".*\" \"moo\")
+           (first (
+                   (equals \"foo\")
+                   (equals \"moo\")
+           ))
+          )
+   )"
+
 let test_sexp_string _ =
-  let all_rules =
-    "(first ((
-              (first (accept reject))
-              (not (matches \"foo\"))
-              (replace \"bar\" \"baz\")
-              ( (() && (prefix_matches \"ba\")) && (suffix_matches \"az\"))
-              ((first ()) || (replace \"baz\" \"foo\"))
-             )
-             (replace \".*\" \"moo\")
-             (first (
-                     (equals \"foo\")
-                     (equals \"moo\")
-             ))
-            )
-     )" in
   let rule = rule_of_sexp (Sexplib.Sexp.of_string all_rules) in
   assert_equal (Mapper.apply rule "bar") (Some "foo");
   assert_equal (Mapper.apply rule "foo") (Some "moo")
@@ -59,10 +60,33 @@ let test_documentation _ =
   verify "CEO@business.COM" (Some "ceo@business.com");
   verify "donations+fundraiser2017@nonprofit.org" (Some "donations@nonprofit.org")
 
+let test_inverse_regressions _ =
+  [ ("(first (accept))", first [accept])
+  ; ("accept", accept)
+  ; ("((first ()))", all [first []])
+  ]
+  |> List.iter @@ function (expected, input) ->
+    let actual = Fmt.strf "%a" dump input in
+    if expected <> actual then
+      Fmt.failwith "%s <> %s" expected actual
+
+let test_inverse _ =
+  let rule = Sexplib.Sexp.of_string all_rules |> rule_of_sexp in
+  let rule' = sexp_of_rule rule |> rule_of_sexp in
+  if rule <> rule' then
+    let s1 =
+      Sexplib.Sexp.of_string all_rules
+      |> Sexplib.Sexp.to_string_hum in
+    let s2 =
+      sexp_of_rule rule
+      |> Sexplib.Sexp.to_string_hum in
+    Fmt.failwith "sexp <-> rule conversion is not bijective:@[<v>@,@[<hov>%s@]@,<>@,@[<hov>%s@]" s1 s2
 
 let suite =
   "mapper suite" >::: [ "test_sexp_string" >:: test_sexp_string
                       ; "test_documentation" >:: test_documentation
+                      ; "test_inverse" >:: test_inverse
+                      ; "test_inverse_regressions" >:: test_inverse_regressions
                       ]
 
 let _ =
