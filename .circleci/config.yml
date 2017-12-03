@@ -21,7 +21,7 @@ jobs:
             make fetch_deps
             make test
       - store_artifacts:
-          path: /tmp/oam/_build/src/main.native
+          path: /tmp/oam/_build/default/bin/main.exe
           destination: main.alpine
       - add_ssh_keys:
           fingerprints:
@@ -76,7 +76,7 @@ jobs:
             make fetch_deps
             make test
       - store_artifacts:
-          path: /tmp/oam/_build/src/main.native
+          path: /tmp/oam/_build/default/bin/main.exe
           destination: main.ubuntu
 workflows:
   version: 2

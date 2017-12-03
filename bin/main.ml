@@ -1,5 +1,4 @@
 open Unix
-open Server
 
 let bin_name = "address-mapping-server"
 let bin_version = "0.8"
@@ -10,7 +9,7 @@ let extract_rules filename_opt =
   | Some filename ->
     let ic = open_in filename in
     let s = Sexplib.Sexp.input_sexp ic in
-    Mapper.rule_of_sexp s
+    Mapper.Parser.rule_of_sexp s
 
 let line_stream_of_channel ic =
   (* TODO no idea whether this is safe! *)
@@ -35,7 +34,7 @@ let handler rules_getter ic oc =
 
   let stream = line_stream_of_channel ic in
   let ppf = Format.formatter_of_out_channel oc in
-  Server.serve ppf rules_getter stream;
+  Mapper.Server.serve ppf rules_getter stream;
   Logs.debug (fun m -> m "Client closed the connection.")
 
 let main host port rules_file update_rules _ =
@@ -52,10 +51,11 @@ let main host port rules_file update_rules _ =
         let f () = rules in f
       end
   in
+  let bundle = Mapper.Server.Handler (rules_getter, (Mapper.apply, Mapper.Parser.pp_rule)) in
   Logs.info (fun m -> m "Establishing server at %s:%d." host port);
   let local_addr = Unix.ADDR_INET(Unix.inet_addr_of_string host, port) in
-  let serve_forever _ = establish_server (handler rules_getter) local_addr in
-  Init.supervise serve_forever
+  let serve_forever _ = establish_server (handler bundle) local_addr in
+  Mapper.Init.supervise serve_forever
 
 (* Logging stuff, copy pasta from docs *)
 

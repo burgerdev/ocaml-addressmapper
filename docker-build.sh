@@ -72,7 +72,7 @@ prepare_image ocaml-addressmapper
 build_dir=.build
 rm -rf $build_dir
 docker cp $container:/home/opam/project2/_build $build_dir
-cp $build_dir/src/main.native $imagedir/
+cp $build_dir/default/bin/main.exe $imagedir/main.native
 docker rm $container
 
 build_image ocaml-addressmapper

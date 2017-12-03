@@ -17,7 +17,7 @@ let main prog argv _ =
       String.concat " " (prog :: quoted)
     in Logs.debug
       (fun m -> m "Supervising effective command line: [%s]" (log_args ()));
-    Init.supervise child
+    Mapper.Init.supervise child
 
 (* Logging stuff, copy pasta from docs *)
 
