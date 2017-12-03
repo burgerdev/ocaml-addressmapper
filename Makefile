@@ -21,6 +21,8 @@ test_server: _build/test/test_server.native
 	$<
 
 clean:
+	rm -rf .build
+	rm -f *.native
 	ocamlbuild -clean
 
 _build/src/%.native: src/%.ml $(SOURCES)
