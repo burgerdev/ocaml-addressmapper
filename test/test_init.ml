@@ -1,7 +1,7 @@
 open OUnit
 open Unix
 open Sys
-open Init
+open Mapper.Init
 
 let range a b =
   let rec aux m n acc =

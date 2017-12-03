@@ -1,5 +1,5 @@
 open OUnit
-open Server
+open Mapper.Server
 open Fmt
 
 let test_parse _ =
@@ -37,6 +37,7 @@ let test_format _ =
   |> List.iter @@ must_match
 
 let test_serve _ =
+  let handler = Handler ((fun _ -> Mapper.accept), (Mapper.apply, Mapper.Parser.pp_rule)) in
   let (expected, input) =
     (List.fold_left @@ fun (a, b) (x, y) -> ("\n" :: x :: a, y :: b)) ([], []) @@
     [ ("200 abuse@example.com", "get abuse@example.com")
@@ -52,7 +53,7 @@ let test_serve _ =
   in
   List.rev input
   |> Stream.of_list
-  |> (serve Format.str_formatter @@ fun _ -> Mapper.accept);
+  |> (serve Format.str_formatter handler);
   let actual = Format.flush_str_formatter () in
   if expected <> actual then
     failwith "@[<v>@[<hv>%a@]@,<>@,@[<hv>%a@]@]" lines expected lines actual

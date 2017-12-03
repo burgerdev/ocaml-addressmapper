@@ -1,4 +1,6 @@
 
+type 'a handler = Handler of ((unit -> 'a) * (('a -> string -> string option) * 'a Fmt.t))
+
 type request =
   | Get of string
   | Put of string
@@ -20,6 +22,6 @@ type response =
 
 val pp_response: response Fmt.t
 
-val handle_request: (unit -> Mapper.rule) -> request -> response
+val handle_request: 'a handler -> request -> response
 
-val serve: Format.formatter -> (unit -> Mapper.rule) -> string Stream.t -> unit
+val serve: Format.formatter -> 'a handler -> string Stream.t -> unit
