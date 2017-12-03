@@ -1,5 +1,7 @@
 open OUnit
+
 open Mapper
+open Mapper.Parser
 
 let all_rules =
   "(first ((

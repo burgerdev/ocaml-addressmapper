@@ -92,11 +92,15 @@ let pp_response =
 
 let pp_addr = Fmt.hbox @@ Fmt.brackets Fmt.string
 
-let handle_request create_rule = function
+type 'a handler = Handler of ((unit -> 'a) * (('a -> string -> string option) * 'a Fmt.t))
+
+let handle_request handler =
+  let (Handler (create_rule, (apply_rule, dump_rule))) = handler in
+  function
   | Health -> begin
       try
         let rule = create_rule () in
-        Logs.debug (fun m -> m "@[<v2>health check - current rules:@,%a@]" Mapper.dump_rule rule);
+        Logs.debug (fun m -> m "@[<v2>health check - current rules:@,%a@]" dump_rule rule);
         Healthy
       with e ->
         Logs.err (fun m -> m "@[<v2>health check - error:@,@[<hov2>%a@]@]" Fmt.exn e);
@@ -111,7 +115,7 @@ let handle_request create_rule = function
   | Get input ->
     try
       let rule = create_rule () in
-      match Mapper.apply rule input with
+      match apply_rule rule input with
       | Some output ->
         Logs.info
           (fun m -> m "Found mapping of %a to %a." pp_addr input pp_addr output);
@@ -125,10 +129,10 @@ let handle_request create_rule = function
       Logs.err (fun m -> m "@[<v2>rule evaluation error:@,%a@]" Fmt.exn e);
       Internal_error
 
-let serve ppf create_rule stream =
+let serve ppf handler stream =
   let f line =
     request_of_string line
-    |> handle_request create_rule
+    |> handle_request handler
     |> pp_response ppf;
     Format.pp_print_newline ppf ()
 
