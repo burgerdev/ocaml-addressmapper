@@ -100,7 +100,7 @@ docker run -d -p 30303:30303 -v /tmp/rules.sexp:/rules.sexp:ro burgerdev/ocaml-a
 ```
 
 This file contains the following instructions (see
-[configuration.md](configuration.md) for an explanation of the addressmapper
+[configuration.md](doc/configuration.md) for an explanation of the addressmapper
 rules):
 
   1. Address sanitizing.
