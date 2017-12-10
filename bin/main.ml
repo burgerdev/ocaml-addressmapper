@@ -11,14 +11,7 @@ let extract_rules filename_opt =
     let s = Sexplib.Sexp.input_sexp ic in
     Mapper.Parser.rule_of_sexp s
 
-let line_stream_of_channel ic =
-  (* TODO no idea whether this is safe! *)
-  let getter _ =
-    try
-      Some (input_line ic)
-    with
-    | End_of_file -> None
-  in Stream.from getter
+let line_stream_of_channel ic = Stream.of_list [input_line ic]
 
 let pp_peer =
   let string_of_ic ic =

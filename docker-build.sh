@@ -117,5 +117,6 @@ then
     assert_expected "get ab0011856cd" "200 bbNUMBERScd\n"
     assert_expected "get ab0cd1" "200 bbNUMBERScd1\n"
 
-    assert_expected "get abcd\nget wxyz" "200 bbcd\n200 wxyz\n"
+    # switched off connection keep-alive because it does not work well with postfix
+    # assert_expected "get abcd\nget wxyz" "200 bbcd\n200 wxyz\n"
 fi
