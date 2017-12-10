@@ -1,5 +1,5 @@
 opam-version: "1.2"
-version: "0.8"
+version: "0.9"
 maintainer: "webmaster@burgerdev.de"
 authors: ["Markus Rudy"]
 homepage: "https://github.com/burgerdev/ocaml-addressmapper"
