@@ -10,6 +10,9 @@ test:
 install:
 	jbuilder build @install
 
+doc:
+	jbuilder build @doc
+
 clean:
 	rm -rf .build
 	rm -f *.native
@@ -18,4 +21,4 @@ clean:
 fetch_deps:
 	opam install -y ocamlfind ounit sexplib cmdliner logs fmt jbuilder
 
-.PHONY: build all test install clean fetch_deps
+.PHONY: build all test install doc clean fetch_deps

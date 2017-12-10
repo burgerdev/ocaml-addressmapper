@@ -34,7 +34,11 @@ plus part).
 
 ```bash
 make fetch_deps # installs dependencies using opam
-make all
+make build
+
+# optionally, run tests and/or create API doc
+# make test
+# make doc
 ```
 
 ### Build in Development Container
