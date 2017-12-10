@@ -1,7 +1,7 @@
 open Unix
 
 let bin_name = "supervise"
-let bin_version = "0.8"
+let bin_version = "0.9"
 
 let main prog argv _ =
   let child _ =
