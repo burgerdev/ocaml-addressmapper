@@ -29,26 +29,25 @@ type request =
   | Get of string
   | Put of string
   | Health
-  | Invalid of string
 
 let request_of_string line =
   (* TODO uglyness below rings alarm bells, we should be using a parser *)
   (* BUG lowercasing here is probably not expected *)
   let line = String.lowercase_ascii line in
   try
-    Scanf.sscanf line "get %s" (fun x -> Get (percent_decode x))
+    Scanf.sscanf line "get %s" (fun x -> Ok (Get (percent_decode x)))
   with
   | Scanf.Scan_failure(_) ->
     begin
       try
-        Scanf.sscanf line "put %s" (fun x -> Put (percent_decode x))
+        Scanf.sscanf line "put %s" (fun x -> Ok (Put (percent_decode x)))
       with
       | Scanf.Scan_failure(_) ->
         begin
           if line = "health" then
-            Health
+            Ok Health
           else
-            Invalid line
+            Error line
         end
     end
 
@@ -56,7 +55,6 @@ let pp_request = Fmt.hbox @@ Fmt.of_to_string @@ function
   | Get s -> "get " ^ s
   | Put s -> "put " ^ s
   | Health -> "health"
-  | Invalid s -> s
 
 type response =
   | Malformed
@@ -92,10 +90,10 @@ let pp_response =
 
 let pp_addr = Fmt.hbox @@ Fmt.brackets Fmt.string
 
-type 'a handler = Handler of ((unit -> 'a) * (('a -> string -> string option) * 'a Fmt.t))
+type 'a handler = Handler of (unit -> 'a) * ('a -> string -> string option) * 'a Fmt.t
 
 let handle_request handler =
-  let (Handler (create_rule, (apply_rule, dump_rule))) = handler in
+  let (Handler (create_rule, apply_rule, dump_rule)) = handler in
   function
   | Health -> begin
       try
@@ -106,9 +104,6 @@ let handle_request handler =
         Logs.err (fun m -> m "@[<v2>health check - error:@,@[<hov2>%a@]@]" Fmt.exn e);
         Unhealthy
     end
-  | Invalid req ->
-    Logs.info (fun m -> m "@[<v2>invalid request:@,@[<h>%s@]@]" req);
-    Malformed
   | Put _ as r ->
     Logs.info (fun m -> m "@[<v2>unsupported request:@,%a@]" pp_request r);
     Unsupported
@@ -131,8 +126,12 @@ let handle_request handler =
 
 let serve ppf handler stream =
   let f line =
-    request_of_string line
-    |> handle_request handler
+    request_of_string line |> begin function
+    | Error s ->
+      Logs.info (fun m -> m "@[<v2>invalid request:@,@[<h>%s@]@]" s);
+      Malformed
+    | Ok r -> handle_request handler r
+    end
     |> pp_response ppf;
     Format.pp_print_newline ppf ()
 

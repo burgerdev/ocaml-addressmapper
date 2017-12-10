@@ -1,6 +1,6 @@
 (** Configurable server for postfix' TCP lookup tables *)
 
-(** Mapping rules *)
+(** {2 Rule Type } *)
 
 type rule
 (** the abstract type [rule] encodes how to map an input string to an optional
@@ -9,10 +9,12 @@ type rule
 type t = rule
 (** [t] is the conventional alias for [rule] *)
 
+(** {2 Rule Application } *)
+
 val apply: rule -> string -> string option
 (** [apply r i] applies rule [r] to input [i] *)
 
-(** Predefined Rules *)
+(** {2 Predefined Rules } *)
 
 val accept: rule
 (** a rule that always returns the input string *)
@@ -44,6 +46,8 @@ val replace: string -> string -> rule
 val constant: string -> rule
 (** [constant a] always returns [a] *)
 
+(** {2 Rule Combinators } *)
+
 val all: rule list -> rule
 (** [all r] returns what the last rule returned iff all rules returned [Some],
     otherwise it returns [None]. if [r] is empty, it returns the input. *)
@@ -56,13 +60,14 @@ val not: rule -> rule
 (** [not r] returns the input if [r] returns [None], otherwise it returns
     [None] *)
 
-(** Utilities *)
+(** {2 Utility } *)
 
 val log_src: Logs.src
 (** [log_src] is the [Logs.src] used by this module *)
 
+(** {2 Submodules } *)
+
 module Parser: sig
-  (** Rule I/O *)
 
   val rule_of_sexp: Sexplib.Sexp.t -> rule
   (** [rule_of_sexp s] parses [s] according to the documented grammar *)
@@ -95,7 +100,7 @@ end
 (** Tools for parsing and printing rules *)
 
 module Server: module type of Server
-(** TCP Lookup Table *)
+(** lookup service based on [type rule] *)
 
 module Init: module type of Init
 (** Init process for running in Docker *)

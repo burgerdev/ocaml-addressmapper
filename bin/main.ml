@@ -44,7 +44,7 @@ let main host port rules_file update_rules _ =
         let f () = rules in f
       end
   in
-  let bundle = Mapper.Server.Handler (rules_getter, (Mapper.apply, Mapper.Parser.pp_rule)) in
+  let bundle = Mapper.Server.Handler (rules_getter, Mapper.apply, Mapper.Parser.pp_rule) in
   Logs.info (fun m -> m "Establishing server at %s:%d." host port);
   let local_addr = Unix.ADDR_INET(Unix.inet_addr_of_string host, port) in
   let serve_forever _ = establish_server (handler bundle) local_addr in

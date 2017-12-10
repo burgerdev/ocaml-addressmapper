@@ -1,4 +1,0 @@
-true: package(sexplib), package(str), package(oUnit), package(unix), \
-      package(cmdliner), \
-      package(fmt, fmt.cli, fmt.tty), \
-      package(logs, logs.cli, logs.fmt)

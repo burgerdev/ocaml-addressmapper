@@ -1,6 +1,8 @@
 _build
 .build
 *.native
+*.out
+*.install
 
 # editors
 .DS_Store
@@ -8,5 +10,4 @@ _build
 *~
 
 # jbuilder
-mapper.install
 .merlin
