@@ -56,7 +56,7 @@ function docker_create {
 
 if [[ -n "$CI" ]]
 then
-    docker_make clean fetch_deps test doc
+    docker_make clean fetch_deps test
     docker_create
     docker start -a $container
     docker rm "$container"
