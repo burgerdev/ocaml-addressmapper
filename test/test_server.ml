@@ -8,7 +8,7 @@ let test_parse _ =
       let pp_res ppf = function
         | Ok req -> pf ppf "Ok (%a)" pp_request req
         | Error s -> pf ppf "Error (%s)" s in
-      failwith "did not match: @[<v>@[<hv>%a@]@,<>@,@[<hv>%s@]@]" pp_res x y
+      failwith "did not match: @[<v>@[<hv>%a@]@,<>@,@[<hv>%a@]@]" pp_res x pp_res (request_of_string y)
     else
       ()
   in
