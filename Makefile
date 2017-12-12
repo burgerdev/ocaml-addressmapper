@@ -19,6 +19,6 @@ clean:
 	jbuilder clean
 
 fetch_deps:
-	opam install -y ocamlfind ounit sexplib cmdliner logs fmt jbuilder
+	opam install -y ocamlfind ounit sexplib mparser cmdliner logs fmt jbuilder
 
 .PHONY: build all test install doc clean fetch_deps

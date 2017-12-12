@@ -1,9 +1,11 @@
+open MParser
+
 
 let log_src = Logs.Src.create "tcp-table-server"
 
 module Logs = (val (Logs.src_log log_src))
 
-let percent_encoding_re = Str.regexp "%\\([0-9a-f][0-9a-f]\\)"
+let percent_encoding_re = Str.regexp "%\\([0-9a-fA-F][0-9a-fA-F]\\)"
 
 let percent_decode =
   Str.global_substitute percent_encoding_re @@ fun x ->
@@ -30,26 +32,27 @@ type request =
   | Put of string
   | Health
 
+let get = string "get" <|> string "GET"
+let put = string "put" <|> string "PUT"
+let health = string "health" <|> string "HEALTH"
+
+let get_req = get >> spaces >> many_chars any_char
+              |>> percent_decode
+              |>> fun s -> Get s
+
+let put_req = put >> spaces >> many_chars any_char
+              |>> percent_decode
+              |>> fun s -> Put s
+
+let health_req = health >>$ Health
+
+let request_parser = get_req <|> put_req <|> health_req
+
+
 let request_of_string line =
-  (* TODO uglyness below rings alarm bells, we should be using a parser *)
-  (* BUG lowercasing here is probably not expected *)
-  let line = String.lowercase_ascii line in
-  try
-    Scanf.sscanf line "get %s" (fun x -> Ok (Get (percent_decode x)))
-  with
-  | Scanf.Scan_failure(_) ->
-    begin
-      try
-        Scanf.sscanf line "put %s" (fun x -> Ok (Put (percent_decode x)))
-      with
-      | Scanf.Scan_failure(_) ->
-        begin
-          if line = "health" then
-            Ok Health
-          else
-            Error line
-        end
-    end
+  match parse_string request_parser line () with
+  | Success req -> Ok req
+  | Failed _ -> Error line
 
 let pp_request = Fmt.hbox @@ Fmt.of_to_string @@ function
   | Get s -> "get " ^ s
