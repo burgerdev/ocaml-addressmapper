@@ -1,7 +1,7 @@
 (jbuild_version 1)
 
 (executables
- ((names (main supervise))
+ ((names (main))
   (libraries (mapper
               sexplib str cmdliner unix
               fmt fmt.cli fmt.tty
@@ -9,5 +9,5 @@
 
 (install
  ((section bin)
-  (files ((main.exe as addressmapper) (supervise.exe as dumb_init))))
+  (files ((main.exe as addressmapper))))
 )
