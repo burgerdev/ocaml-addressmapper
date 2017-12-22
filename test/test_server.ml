@@ -40,7 +40,7 @@ let test_format _ =
   |> List.iter @@ must_match
 
 let test_serve _ =
-  let handler = Handler ((fun _ -> Mapper.accept), Mapper.apply, Mapper.Parser.pp_rule) in
+  let handler = Handler ((fun _ -> Mapper.accept), Mapper.apply, Mapper.pp_rule) in
   let (expected, input) =
     (List.fold_left @@ fun (a, b) (x, y) -> ("\n" :: x :: a, y :: b)) ([], []) @@
     [ ("200 abuse@example.com", "get abuse@example.com")
