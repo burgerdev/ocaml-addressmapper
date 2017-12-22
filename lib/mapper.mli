@@ -56,14 +56,20 @@ val first: rule list -> rule
 (** [first r] returns what the first applicable rule returned. If [r] is empty,
     it returns [None]. *)
 
-val not: rule -> rule
-(** [not r] returns the input if [r] returns [None], otherwise it returns
+val invert: rule -> rule
+(** [invert r] returns the input if [r] returns [None], otherwise it returns
     [None] *)
 
 (** {2 Utility } *)
 
 val log_src: Logs.src
 (** [log_src] is the [Logs.src] used by this module *)
+
+val pp_rule: Format.formatter -> rule -> unit
+(** [pp_rule ppf r] pretty-prints the rule [r] to [ppf] *)
+
+val pp: Format.formatter -> rule -> unit
+(** [pp] is an alias for [pp_rule] *)
 
 (** {2 Submodules } *)
 
@@ -74,22 +80,6 @@ module Parser: sig
 
   val t_of_sexp: Sexplib.Sexp.t -> t
   (** [t_of_sexp] is an alias for [rule_of_sexp] *)
-
-
-
-  val pp_rule: Format.formatter -> rule -> unit
-  (** [pp_rule ppf r] prints a summary of [r] to [ppf] (only the topmost rule is
-      shown if [r] is an aggregated rule) *)
-
-  val pp: Format.formatter -> rule -> unit
-  (** [pp] is an alias for [pp_rule] *)
-
-  val dump_rule: Format.formatter -> rule -> unit
-  (** [dump_rule ppf r] dumps [r] in a format suitable for a rule file
-      (sexp-based). *)
-
-  val dump: Format.formatter -> rule -> unit
-  (** [dump] is an alias for [dump_rule] *)
 
   val sexp_of_rule: rule -> Sexplib.Sexp.t
   (** [sexp_of_rule rule] generates an S-expression of the given [rule]. *)
