@@ -40,13 +40,13 @@ let test_first _ =
   must_reject (first [reject; reject]);
   must_reject (first [])
 
-let test_not _ =
-  must_reject (not accept);
-  must_accept (not reject);
-  must_accept (not (all [accept; reject]));
-  must_reject (not (first [accept; reject]));
-  must_reject (not (matches test_string));
-  must_accept (not (not (matches test_string)))
+let test_invert _ =
+  must_reject (invert accept);
+  must_accept (invert reject);
+  must_accept (invert (all [accept; reject]));
+  must_reject (invert (first [accept; reject]));
+  must_reject (invert (matches test_string));
+  must_accept (invert (invert (matches test_string)))
 
 let test_matches _ =
   must_accept (matches test_string);
@@ -82,7 +82,7 @@ let test_case _ =
 let suite =
   "mapper suite" >::: [ "test_all" >:: test_all
                       ; "test_first" >:: test_first
-                      ; "test_not" >:: test_not
+                      ; "test_not" >:: test_invert
                       ; "test_case" >:: test_case
                       ; "test_matches" >:: test_matches
                       ; "test_replace" >:: test_replace
