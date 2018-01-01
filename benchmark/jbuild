@@ -1,0 +1,9 @@
+(jbuild_version 1)
+
+(executables
+ ((names (benchmark))
+  (libraries (mapper
+              core core_bench
+              sexplib str cmdliner unix
+              fmt fmt.cli fmt.tty
+              logs logs.cli logs.fmt))))
