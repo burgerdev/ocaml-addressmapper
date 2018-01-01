@@ -93,6 +93,7 @@ function assert_expected {
 function cleanup {
     if [[ -z "$DEBUG" ]]
     then
+        docker logs "$container" || true
         docker kill "$container" || true
         docker rm "$container" || true
     fi
@@ -102,7 +103,7 @@ if [[ -n "$CI" ]]
 then
     trap cleanup exit
     container=$(docker create \
-        $image -r /rules.sexp -b 0.0.0.0)
+        $image -r /rules.sexp -b 0.0.0.0 -i -u -vv)
 
     docker cp "$(pwd)/test/rules.sexp" $container:/rules.sexp
     docker start $container
