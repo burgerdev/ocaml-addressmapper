@@ -30,7 +30,7 @@ let handler rules_getter ic oc =
   Mapper.Server.serve ppf rules_getter stream;
   Logs.debug (fun m -> m "Client closed the connection.")
 
-let main host port rules_file update_rules _ =
+let main host port rules_file update_rules init _ =
   let rules_getter =
     if update_rules then
       begin
@@ -48,7 +48,31 @@ let main host port rules_file update_rules _ =
   Logs.info (fun m -> m "Establishing server at %s:%d." host port);
   let local_addr = Unix.ADDR_INET(Unix.inet_addr_of_string host, port) in
   let serve_forever _ = establish_server (handler bundle) local_addr in
-  Mapper.Init.supervise serve_forever
+  let status =
+    if init then
+      Mapper.Init.supervise serve_forever
+    else
+      begin
+        serve_forever ();
+        WEXITED 0
+      end
+  in
+  match status with
+  | WEXITED 0 ->
+    (* regardless of init, we should never reach this point *)
+    Logs.err @@ fun m -> m "Server unexpectedly stopped serving."
+  | WEXITED n ->
+    (* internal error? *)
+    Logs.err @@ fun m -> m "Server process terminated with exit code %d." n
+  | WSIGNALED s ->
+    (* somebody forced the child to terminate, this is probably ok *)
+    let s = Mapper.Init.string_of_signal s in
+    Logs.info @@ fun m -> m "Server was killed by signal %s." s
+  | WSTOPPED s ->
+    (* this is probably not even possible *)
+    let s = Mapper.Init.string_of_signal s in
+    Logs.err @@ fun m -> m "Server was stopped by signal %s." s
+
 
 (* Logging stuff, copy pasta from docs *)
 
@@ -83,12 +107,17 @@ let update_rules_term =
   let doc = "Read rules file for every request." in
   Arg.(value & flag & info ["u"; "update"] ~doc)
 
+let init_term =
+  let doc = "Run as PID 1 (forward signals and reap zombies)." in
+  Arg.(value & flag & info ["i"; "init"] ~doc)
+
 let main_term = Term.(const main
-                     $ host_term
-                     $ port_term
-                     $ rules_term
-                     $ update_rules_term
-                     $ log_term
+                      $ host_term
+                      $ port_term
+                      $ rules_term
+                      $ update_rules_term
+                      $ init_term
+                      $ log_term
                      )
 
 let info =
