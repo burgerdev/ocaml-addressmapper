@@ -1,5 +1,5 @@
 
-all: build test
+all: build test doc
 
 build:
 	jbuilder build
@@ -23,6 +23,6 @@ clean:
 	jbuilder clean
 
 fetch_deps:
-	opam install -y ocamlfind ounit sexplib mparser cmdliner logs fmt jbuilder
+	opam install -y ocamlfind odoc ounit sexplib mparser cmdliner logs fmt jbuilder
 
 .PHONY: build all test install doc benchmark clean fetch_deps
