@@ -8,5 +8,3 @@ include Mapper_predef
 module Parser = Mapper_parser
 module Server = Server
 module Init = Init
-
-let log_src = Logs.Src.create "mapper"
