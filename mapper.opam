@@ -1,11 +1,15 @@
 opam-version: "1.2"
+name: "mapper"
 version: "0.9"
-maintainer: "webmaster@burgerdev.de"
-authors: ["Markus Rudy"]
+maintainer: "Markus Rudy <webmaster@burgerdev.de>"
+authors: ["Markus Rudy <webmaster@burgerdev.de>"]
 homepage: "https://github.com/burgerdev/ocaml-addressmapper"
+doc: "https://io.burgerdev.de/docs/ocaml-addressmapper"
 bug-reports: "https://github.com/burgerdev/ocaml-addressmapper/issues"
 dev-repo: "https://github.com/burgerdev/ocaml-addressmapper.git"
 license: "GPLv3"
-build: [
-  ["jbuilder" "build" "--only" "mapper" "--root" "." "-j" jobs "@install"]
+build: [["jbuilder" "build" "-p" name "-j" jobs]]
+depends: [
+  "sexplib" "mparser" "cmdliner" "logs" "fmt" "jbuilder"
 ]
+available: [ocaml-version >= "4.06.0"]
