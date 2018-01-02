@@ -1,14 +1,11 @@
 
-all: build test doc
+all: build
 
 build:
-	jbuilder build
+	jbuilder build @install
 
 test:
 	jbuilder runtest
-
-install:
-	jbuilder build @install
 
 doc:
 	jbuilder build @doc
@@ -25,4 +22,4 @@ clean:
 fetch_deps:
 	opam install -y ocamlfind odoc ounit sexplib mparser cmdliner logs fmt jbuilder
 
-.PHONY: build all test install doc benchmark clean fetch_deps
+.PHONY: build all test doc benchmark clean fetch_deps
