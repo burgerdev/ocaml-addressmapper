@@ -6,9 +6,6 @@ type rule
 (** the abstract type [rule] encodes how to map an input string to an optional
     output string *)
 
-type t = rule
-(** [t] is the conventional alias for [rule] *)
-
 (** {2 Rule Application } *)
 
 val apply: rule -> string -> string option
@@ -71,23 +68,16 @@ val pp_rule: Format.formatter -> rule -> unit
 val pp: Format.formatter -> rule -> unit
 (** [pp] is an alias for [pp_rule] *)
 
-(** {2 Submodules } *)
-
-module Parser: sig
+(** {2 Conversions } *)
 
   val rule_of_sexp: Sexplib.Sexp.t -> rule
   (** [rule_of_sexp s] parses [s] according to the documented grammar *)
 
-  val t_of_sexp: Sexplib.Sexp.t -> t
-  (** [t_of_sexp] is an alias for [rule_of_sexp] *)
-
   val sexp_of_rule: rule -> Sexplib.Sexp.t
   (** [sexp_of_rule rule] generates an S-expression of the given [rule]. *)
 
-  val sexp_of_t: t -> Sexplib.Sexp.t
-  (** [sexp_of_t] is an alias for [sexp_of_rule] *)
-end
-(** Tools for parsing and printing rules *)
+
+(** {2 Submodules } *)
 
 module Server: module type of Server
 (** lookup service based on [type rule] *)

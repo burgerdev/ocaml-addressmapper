@@ -9,7 +9,7 @@ let extract_rules filename_opt =
   | Some filename ->
     let ic = open_in filename in
     let s = Sexplib.Sexp.input_sexp ic in
-    Mapper.Parser.rule_of_sexp s
+    Mapper.rule_of_sexp s
 
 let line_stream_of_channel ic = Stream.of_list [input_line ic]
 

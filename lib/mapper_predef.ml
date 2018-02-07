@@ -1,95 +1,59 @@
-(* predefined rules *)
-
 open Mapper_rule
+open Mapper_helper
 
-let log_src = Logs.Src.create "rule-mapper-predef"
+let basic name f = Terminal (Fmt.(str name), f)
+let unary name f x = Terminal (Fmt.(str name >>> str x |> parens), f x)
+let binary name f x y = Terminal (Fmt.(str name >>> str x >>> str y |> parens), f x y)
 
-module Logs = (val (Logs.src_log log_src))
+let accept = (fun x -> Some x)
+let accept = basic "accept" accept
 
-let pp_opt ppf = function
-  | Some s -> Fmt.pf ppf "Some(%s)" s
-  | None -> Fmt.pf ppf "None"
+let reject = (fun _ -> None)
+let reject = basic "reject" reject
 
-let pp_comp ppf (input, output) =
-  Fmt.(pf ppf "%s -> %a" input pp_opt output)
+let lower x = Some (String.lowercase_ascii x)
+let lower = basic "lower" lower
 
-let log_wrap pp f = fun input ->
-  let output = f input in
-  Logs.debug (fun m -> m "%a: %a" pp () pp_comp (input, output));
-  output
+let upper x = Some (String.uppercase_ascii x)
+let upper = basic "upper" upper
 
-let create name f = create name @@ log_wrap Fmt.(const string name) f
-let create_pp pp f =
-  let name = match pp with
-    | Some pp -> pp
-    | None -> Fmt.(const string "unknown")
-  in
-  create_pp pp @@ log_wrap name f
+let constant x _ = Some x
+let constant = unary "constant" constant
 
-let accept = create "accept" @@ fun x -> Some x
-let reject = create "reject" @@ fun x -> None
+let equals pattern x =
+  if x = pattern then
+    Some x
+  else
+    None
+let equals = unary "equals" equals
 
-let lower = create "lower" @@ fun input -> Some (String.lowercase_ascii input)
-let upper = create "upper" @@ fun input -> Some (String.uppercase_ascii input)
+let matches pattern x =
+  try
+    let _ = Str.search_forward (Str.regexp pattern) x 0 in
+    Some x
+  with
+  | Not_found -> None
+let matches = unary "matches" matches
 
-let escaped = Fmt.(fmt "%S")
-
-let pp_unary name arg = Some Fmt.(
-    const escaped arg
-    |> prefix sp
-    |> prefix @@ const string name
-    |> parens
-    |> hbox
-  )
-
-let pp_binary name arg1 arg2 = Some Fmt.(
-    const escaped arg2
-    |> prefix sp
-    |> prefix @@ const escaped arg1
-    |> prefix sp
-    |> prefix @@ const string name
-    |> parens
-    |> hbox
-  )
-
-let constant replacement =
-  create_pp (pp_unary "constant" replacement) @@ fun _ -> Some replacement
-
-let equals pattern =
-  let f = fun input -> if pattern = input then Some input else None in
-  create_pp (pp_unary "equals" pattern) f
-
-let matches pattern =
-  let f = fun input ->
-    try
-      let _ = Str.search_forward (Str.regexp pattern) input 0 in
-      Some input
-    with
-    | Not_found -> None
-  in
-  create_pp (pp_unary "matches" pattern) f
-
-let replace pattern replacement =
-  let f input = Some (Str.replace_first (Str.regexp pattern) replacement input) in
-  create_pp (pp_binary "replace" pattern replacement) f
+let replace pattern replacement x =
+  Some (Str.replace_first (Str.regexp pattern) replacement x)
+let replace = binary "replace" replace
 
 let prefix_matches pattern =
   let n = String.length pattern in
-  let f input =
-    if String.length input >= n && String.sub input 0 n = pattern then
-      Some input
+  fun x ->
+    if String.length x >= n && String.sub x 0 n = pattern then
+      Some x
     else
       None
-  in
-  create_pp (pp_unary "prefix_matches" pattern) f
+let prefix_matches = unary "prefix_matches" prefix_matches
 
 let suffix_matches pattern =
   let n = String.length pattern in
-  let f input =
-    let m = String.length input in
-    if m >= n && String.sub input (m-n) n = pattern then
-      Some input
+  fun x ->
+    let m = String.length x in
+    if m >= n && String.sub x (m-n) n = pattern then
+      Some x
     else
       None
-  in
-  create_pp (pp_unary "suffix_matches" pattern) f
+let suffix_matches = unary "suffix_matches" suffix_matches

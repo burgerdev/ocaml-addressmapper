@@ -3,6 +3,7 @@
 (library
  ((name mapper)
   (libraries (sexplib str cmdliner unix
+              ocat
               mparser
               fmt fmt.cli fmt.tty
               logs logs.cli logs.fmt))

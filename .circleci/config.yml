@@ -13,6 +13,12 @@ jobs:
             eval `opam config env`
             make fetch_deps
       - run:
+          name: "Pin ocat"
+          command: |
+            export TERM=dumb
+            eval `opam config env`
+            git clone "https://github.com/burgerdev/ocat.git" ocat
+      - run:
           name: "Build"
           command: |
             export TERM=dumb
