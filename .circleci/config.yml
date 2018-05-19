@@ -59,6 +59,26 @@ jobs:
               git add Dockerfile
               git commit -m "automatic commit triggered by CircleCI build https://circleci.com/gh/burgerdev/ocaml-addressmapper/${CIRCLE_BUILD_NUM}"
               git push -f origin $b
+      - deploy:
+          name: "Upload docs"
+          command: |
+              if [[ "master" == "${CIRCLE_BRANCH}" ]]
+              then
+                  version="master"
+              elif [[ "$(git describe --tags)" == "$(git describe --abbrev=0 --tags)" ]]
+              then
+                  version="$(git describe --abbrev=0 --tags)"
+              fi
+              if [[ -z "$version" ]]
+              then
+                  echo "I refuse to upload documentation for this half-baked lump of code!"
+                  exit 0
+              fi
+              jbuilder build @doc
+              tar -czf docs.tgz -C _build/default/_doc/ .
+              curl -f -X PUT -H "Authorization: ${IO_BURGERDEV_DE_TOKEN}" \
+                  "https://io.burgerdev.de/docs/ocaml-addressmapper/$version?extract" \
+                  --data-binary @docs.tgz
 workflows:
   version: 2
   build_and_deploy:
