@@ -45,10 +45,12 @@ let rec supervise_pid n =
 
 let deliver_signal to_whom signo =
   let s = string_of_signal signo in
-  Logs.debug (fun m -> m "Forwarding signal [%s] to [%d]." s to_whom ~tags:(get_pid_tag ());
-  try kill to_whom signo with
-  | Unix_error (ESRCH, _, _) ->
-    Logs.warn (fun m -> m "Could not deliver signal [%s] to lost child [%d]." s to_whom ~tags:(get_pid_tag ())))
+  let tags = get_pid_tag () in
+  Logs.debug (fun m -> m "Forwarding signal [%s] to [%d]." s to_whom ~tags);
+  try
+    kill to_whom signo
+  with Unix_error (ESRCH, _, _) ->
+    Logs.warn (fun m -> m "Could not deliver signal [%s] to lost child [%d]." s to_whom ~tags)
 
 let supervise f =
   match fork () with
