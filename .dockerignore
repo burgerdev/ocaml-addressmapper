@@ -1,8 +1,20 @@
 _build
 .build
 *.native
+*.install
+*.sh
+*.md
 
 # editors
 .DS_Store
 *.swp
 *~
+
+.circleci
+.dockerignore
+.git*
+benchmark
+Dockerfile
+doc
+Makefile
+
