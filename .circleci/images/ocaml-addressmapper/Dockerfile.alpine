@@ -1,7 +1,0 @@
-FROM alpine
-
-COPY main.native  /
-
-ENTRYPOINT ["/main.native"]
-
-EXPOSE 30303
