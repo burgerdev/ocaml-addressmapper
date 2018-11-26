@@ -14,5 +14,6 @@ build: [
 ]
 depends: [
   "ocaml" { >= "4.06.0" }
+  "ounit" {with-test}
   "sexplib" "mparser" "cmdliner" "logs" "fmt" "dune"
 ]
