@@ -4,8 +4,9 @@ all: build
 build:
 	jbuilder build @install
 
-test:
+test: build
 	jbuilder runtest
+	/bin/sh ./test/test-binary.sh
 
 doc:
 	jbuilder build @doc

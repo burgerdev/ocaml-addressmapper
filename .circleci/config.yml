@@ -12,6 +12,12 @@ jobs:
     - run:
         name: "opam-install"
         command: opam install --with-test .
+    - run:
+        name: "make"
+        command: make
+    - run:
+        name: "make test"
+        command: make test
 workflows:
   version: 2
   push_validation:
