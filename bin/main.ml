@@ -35,13 +35,13 @@ let main host port rules_file update_rules init _ =
     if update_rules then
       begin
         Logs.debug (fun m -> m "Parsing rules for each request.");
-        let f () = extract_rules rules_file in f
+        fun () -> extract_rules rules_file
       end
     else
       begin
         Logs.debug (fun m -> m "Parsing rules once.");
         let rules = extract_rules rules_file in
-        let f () = rules in f
+        fun () -> rules
       end
   in
   let bundle = Mapper.Server.Handler (rules_getter, Mapper.apply, Mapper.pp_rule) in

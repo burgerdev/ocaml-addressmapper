@@ -68,7 +68,7 @@ let all rules =
 let first rules =
   List.fold_left (<|>) (without_label reject) rules
   |> map_label boxed_opt
-  |> map_label Option.(map Fmt.(prefix @@ const string "first "))
+  |> map_label @@ Option.map Fmt.(prefix @@ const string "first ")
   |> map_label boxed_opt
 
 let invert rule =
@@ -77,7 +77,7 @@ let invert rule =
   let label' =
     Fmt.(
       label rule
-      |> Option.map (prefix @@ const string "not ")
+      |> Option.map @@ prefix @@ const string "not "
       |> Option.map boxed)
   in
   Rule (label', f')
