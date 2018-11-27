@@ -27,7 +27,7 @@ let create_pp pp f =
   create_pp pp @@ log_wrap name f
 
 let accept = create "accept" @@ fun x -> Some x
-let reject = create "reject" @@ fun x -> None
+let reject = create "reject" @@ fun _ -> None
 
 let lower = create "lower" @@ fun input -> Some (String.lowercase_ascii input)
 let upper = create "upper" @@ fun input -> Some (String.uppercase_ascii input)

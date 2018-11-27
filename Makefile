@@ -1,27 +1,24 @@
 
+jbuilder=opam exec jbuilder
+
 all: build
 
 build:
-	jbuilder build @install
+	$(jbuilder) build @install
 
-test:
-	jbuilder runtest
+test: build
+	$(jbuilder) runtest
+	/bin/sh ./test/test-binary.sh
 
 doc:
-	jbuilder build @doc
+	$(jbuilder) build @doc
 
 benchmark:
-	jbuilder build benchmark/benchmark.exe
+	$(jbuilder) build benchmark/benchmark.exe
 	./_build/default/benchmark/benchmark.exe -q 1 cycles samples time -clear-columns -display tall
 
-docker:
-	VERSION=$(git describe --abbrev=0 --tags)
-	env CI=true bash docker-build.sh alpine $(VERSION)
-
 clean:
-	rm -rf .build
-	rm -f *.native
-	jbuilder clean
+	$(jbuilder) clean
 
 fetch_deps:
 	opam install -y ocamlfind odoc ounit sexplib mparser cmdliner logs fmt jbuilder

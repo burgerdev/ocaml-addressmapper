@@ -8,7 +8,6 @@ module Option = struct
 
   let (>>=) x f = bind f x
   let map f x = x >>= fun a -> Some (f a)
-  let join x = x >>= fun a -> a
 
   let (>=>) f g = fun x -> f x >>= g
 
@@ -30,9 +29,6 @@ let map_label f = function
 let pp = fun ppf rule -> Option.(default Fmt.nop (label rule)) ppf ()
 
 let pp_rule = pp
-
-let map f = function
-  | Rule (label, mapper) -> Rule (label, f mapper)
 
 let create_pp pp mapper = Rule (pp, mapper)
 
@@ -63,7 +59,7 @@ let without_label = map_label @@ fun _ -> None
 
 let accept = create "accept" Option.return
 
-let reject = create "reject" @@ fun x -> None
+let reject = create "reject" @@ fun _ -> None
 
 let all rules =
   List.fold_left (>>>) (without_label accept) rules
@@ -72,7 +68,7 @@ let all rules =
 let first rules =
   List.fold_left (<|>) (without_label reject) rules
   |> map_label boxed_opt
-  |> map_label Option.(Fmt.(map @@ prefix @@ const string "first "))
+  |> map_label @@ Option.map Fmt.(prefix @@ const string "first ")
   |> map_label boxed_opt
 
 let invert rule =
@@ -81,7 +77,7 @@ let invert rule =
   let label' =
     Fmt.(
       label rule
-      |> Option.map (prefix @@ const string "not ")
+      |> Option.map @@ prefix @@ const string "not "
       |> Option.map boxed)
   in
   Rule (label', f')

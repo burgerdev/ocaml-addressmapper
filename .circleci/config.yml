@@ -2,65 +2,24 @@ version: 2.0
 jobs:
   build:
     docker:
-        - image: &img burgerdev/ocaml-addressmapper-devel:alpine
-    working_directory: /tmp/oam
+    - image: ocaml/opam2:alpine-3.8-ocaml-4.06
+    working_directory: /tmp/mapper
     steps:
-      - checkout
-      - run:
-          name: "Fetch Dependencies"
-          command: |
-            export TERM=dumb
-            eval `opam config env`
-            make fetch_deps
-      - run:
-          name: "Build"
-          command: |
-            export TERM=dumb
-            eval `opam config env`
-            make build
-      - run:
-          name: "Test"
-          command: |
-            export TERM=dumb
-            eval `opam config env`
-            make test
-      - store_artifacts:
-          path: /tmp/oam/_build/default/bin/main.exe
-          destination: main.alpine
-      - add_ssh_keys:
-          fingerprints:
-            - "fa:c2:d1:06:3d:cf:db:e6:b7:5a:2b:ac:9b:40:81:11"
-      - setup_remote_docker
-      - run:
-          name: "Integration Test"
-          command: |
-              make docker
-      - deploy:
-          name: "Push to Branch"
-          command: |
-              version="$(git describe --abbrev=0 --tags)"
-              if [[ "heads/$version" != "${CIRCLE_BRANCH}" && "master" != "${CIRCLE_BRANCH}" ]]
-              then
-                  echo "not deploying to '$version' from '${CIRCLE_BRANCH}'"
-                  exit 0
-              fi
-              url="https://${CIRCLE_BUILD_NUM}-87226222-gh.circle-artifacts.com/0/main.alpine"
-              tmp=$(mktemp)
-              cat .circleci/images/ocaml-addressmapper/Dockerfile.alpine.template | \
-                  sed -e "s|URL|$url|" -e "s|HASH|$(git rev-parse --short HEAD)|" >$tmp
-              if [[ "master" == "${CIRCLE_BRANCH}" ]]
-              then
-                  b="alpine"
-              else
-                  b="$version-alpine"
-              fi
-              git checkout -f -B $b
-              mv $tmp Dockerfile
-              git add Dockerfile
-              git commit -m "automatic commit triggered by CircleCI build https://circleci.com/gh/burgerdev/ocaml-addressmapper/${CIRCLE_BUILD_NUM}"
-              git push -f origin $b
+    - run:
+        name: "conf-deps"
+        command: sudo apk add --no-cache m4 ncurses
+    - checkout
+    - run:
+        name: "opam-install"
+        command: opam install --with-test .
+    - run:
+        name: "make"
+        command: make
+    - run:
+        name: "make test"
+        command: make test
 workflows:
   version: 2
-  build_and_deploy:
+  push_validation:
     jobs:
       - build
