@@ -109,7 +109,10 @@ let handle_request rule =
   | Request.Get input ->
     return input >|= Mapper_rule.apply rule >>= Response.of_opt
 
-let handle rule _ (ic, oc) =
+type handler = Lwt_unix.sockaddr -> Lwt_io.input_channel * Lwt_io.output_channel -> unit Lwt.t
+
+
+let handler_of_rule rule = fun _peer (ic, oc) ->
   Lwt_io.read_line ic
   >|= Request.request_of_string
   >>= handle_request rule

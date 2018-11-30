@@ -90,5 +90,6 @@ end
 (** Tools for parsing and printing rules *)
 
 module Mapper_lwt: sig
-  val handle: rule -> 'a -> Lwt_io.input_channel * Lwt_io.output_channel -> unit Lwt.t
+  type handler = Lwt_unix.sockaddr -> Lwt_io.input_channel * Lwt_io.output_channel -> unit Lwt.t
+  val handler_of_rule: rule -> handler
 end

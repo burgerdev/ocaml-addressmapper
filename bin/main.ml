@@ -23,7 +23,7 @@ let main host port rules_file _update_rules _ =
   let rule = extract_rules rules_file in
   let local_addr = Unix.ADDR_INET(Unix.inet_addr_of_string host, port) in
   let main_thread =
-    Mapper.Mapper_lwt.handle rule
+    Mapper.Mapper_lwt.handler_of_rule rule
     |> Lwt_io.establish_server_with_client_address local_addr
     >>= wait_for_signal
     >>= Lwt_io.shutdown_server
