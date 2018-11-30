@@ -1,0 +1,11 @@
+(library
+ (name mapper)
+ (public_name mapper)
+
+ (libraries
+              sexplib str cmdliner unix
+              mparser
+              lwt lwt.unix
+              fmt fmt.cli fmt.tty
+              logs logs.cli logs.fmt)
+)
