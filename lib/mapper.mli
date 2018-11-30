@@ -89,9 +89,6 @@ module Parser: sig
 end
 (** Tools for parsing and printing rules *)
 
-module Server: module type of Server
-(** lookup service based on [type rule] *)
-
 module Mapper_lwt: sig
   val handle: rule -> 'a -> Lwt_io.input_channel * Lwt_io.output_channel -> unit Lwt.t
 end
