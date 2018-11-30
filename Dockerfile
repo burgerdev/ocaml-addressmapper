@@ -16,4 +16,4 @@ COPY --from=build /src/_build/default/bin/main.exe  /mapper
 
 EXPOSE 30303
 
-ENTRYPOINT ["/mapper", "-i"]
+ENTRYPOINT ["/mapper", "-i", "-b", "0.0.0.0"]
