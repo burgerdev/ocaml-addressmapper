@@ -1,0 +1,15 @@
+(executables
+ (names main)
+ (modules main)
+ (libraries
+            mapper
+            lwt lwt.unix
+            sexplib str cmdliner unix
+            fmt fmt.cli fmt.tty
+            logs logs.cli logs.fmt)
+)
+
+(install
+ (section bin)
+ (files (main.exe as addressmapper))
+)
