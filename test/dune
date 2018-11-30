@@ -1,0 +1,18 @@
+(test
+  (name test_mapper)
+  (libraries mapper
+              oUnit
+              sexplib str cmdliner unix
+              fmt fmt.cli fmt.tty
+              logs logs.cli logs.fmt)
+  (modules test_mapper)
+)
+(test
+  (name test_parser)
+  (libraries mapper
+              oUnit
+              sexplib str cmdliner unix
+              fmt fmt.cli fmt.tty
+              logs logs.cli logs.fmt)
+  (modules test_parser)
+)
