@@ -18,7 +18,7 @@ let wait_for_signal x =
   ignore (Lwt_unix.on_signal Sys.sigterm (fun _ -> Lwt.wakeup_later u ()));
   t >|= fun _ -> x
 
-let main host port rules_file _update_rules _init _ =
+let main host port rules_file _update_rules _ =
   let open Lwt in
   let rule = extract_rules rules_file in
   let local_addr = Unix.ADDR_INET(Unix.inet_addr_of_string host, port) in
@@ -63,16 +63,11 @@ let update_rules_term =
   let doc = "Read rules file for every request." in
   Arg.(value & flag & info ["u"; "update"] ~doc)
 
-let init_term =
-  let doc = "Run as PID 1 (forward signals and reap zombies)." in
-  Arg.(value & flag & info ["i"; "init"] ~doc)
-
 let main_term = Term.(const main
                       $ host_term
                       $ port_term
                       $ rules_term
                       $ update_rules_term
-                      $ init_term
                       $ log_term
                      )
 
