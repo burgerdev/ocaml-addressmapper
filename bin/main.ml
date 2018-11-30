@@ -30,48 +30,28 @@ let handler rules_getter ic oc =
   Mapper.Server.serve ppf rules_getter stream;
   Logs.debug (fun m -> m "Client closed the connection.")
 
-let main host port rules_file update_rules init _ =
-  let rules_getter =
-    if update_rules then
-      begin
-        Logs.debug (fun m -> m "Parsing rules for each request.");
-        fun () -> extract_rules rules_file
-      end
-    else
-      begin
-        Logs.debug (fun m -> m "Parsing rules once.");
-        let rules = extract_rules rules_file in
-        fun () -> rules
-      end
-  in
-  let bundle = Mapper.Server.Handler (rules_getter, Mapper.apply, Mapper.pp_rule) in
-  Logs.info (fun m -> m "Establishing server at %s:%d." host port);
+let rec loop: (unit -> unit Lwt.t) -> unit Lwt.t = fun f ->
+  Lwt.(f () >>= fun () -> loop f)
+
+let action printer () = Lwt.(return "a" >>= printer)
+
+let wait_for_signal x =
+  let open Lwt in
+  let (t, u) = Lwt.task () in
+  ignore (Lwt_unix.on_signal Sys.sigint (fun _ -> Lwt.wakeup_later u ()));
+  ignore (Lwt_unix.on_signal Sys.sigterm (fun _ -> Lwt.wakeup_later u ()));
+  t >|= fun _ -> x
+
+let main host port rules_file _update_rules _init _ =
+  let open Lwt in
+  let rule = extract_rules rules_file in
   let local_addr = Unix.ADDR_INET(Unix.inet_addr_of_string host, port) in
-  let serve_forever _ = establish_server (handler bundle) local_addr in
-  let status =
-    if init then
-      Mapper.Init.supervise serve_forever
-    else
-      begin
-        serve_forever ();
-        WEXITED 0
-      end
-  in
-  match status with
-  | WEXITED 0 ->
-    (* regardless of init, we should never reach this point *)
-    Logs.err @@ fun m -> m "Server unexpectedly stopped serving."
-  | WEXITED n ->
-    (* internal error? *)
-    Logs.err @@ fun m -> m "Server process terminated with exit code %d." n
-  | WSIGNALED s ->
-    (* somebody forced the child to terminate, this is probably ok *)
-    let s = Mapper.Init.string_of_signal s in
-    Logs.info @@ fun m -> m "Server was killed by signal %s." s
-  | WSTOPPED s ->
-    (* this is probably not even possible *)
-    let s = Mapper.Init.string_of_signal s in
-    Logs.err @@ fun m -> m "Server was stopped by signal %s." s
+  let main_thread =
+    Mapper.Mapper_lwt.handle rule
+    |> Lwt_io.establish_server_with_client_address local_addr
+    >>= wait_for_signal
+    >>= Lwt_io.shutdown_server
+  in Lwt_main.run main_thread
 
 
 (* Logging stuff, copy pasta from docs *)

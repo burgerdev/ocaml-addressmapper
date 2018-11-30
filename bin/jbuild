@@ -3,6 +3,7 @@
 (executables
  ((names (main))
   (libraries (mapper
+              lwt lwt.unix
               sexplib str cmdliner unix
               fmt fmt.cli fmt.tty
               logs logs.cli logs.fmt))))

@@ -5,18 +5,15 @@ open Fmt
 let test_parse _ =
   let must_match (x, y) =
     if x <> request_of_string y then
-      let pp_res ppf = function
-        | Ok req -> pf ppf "Ok (%a)" pp_request req
-        | Error s -> pf ppf "Error (%s)" s in
-      failwith "did not match: @[<v>@[<hv>%a@]@,<>@,@[<hv>%a@]@]" pp_res x pp_res (request_of_string y)
+      failwith "did not match: @[<v>@[<hv>%a@]@,<>@,@[<hv>%a@]@]" pp_request x pp_request (request_of_string y)
     else
       ()
   in
-  [ (Ok (Get "abuse@example.com"), "get abuse@example.com")
-  ; (Ok (Get "a~use 1example\n.com"), "get a%7euse%201example%0A.com")
-    ; (Ok (Put "abuse@example.com"), "put abuse@example.com")
-  ; (Ok Health, "health")
-  ; (Error "something else", "something else")
+  [ Get "abuse@example.com", "get abuse@example.com"
+  ; Get "a~use 1example\n.com", "get a%7euse%201example%0A.com"
+  ; Put "abuse@example.com", "put abuse@example.com"
+  ; Health, "health"
+  ; Other "something else", "something else"
   ]
   |> List.iter @@ must_match
 
@@ -47,7 +44,7 @@ let test_serve _ =
     ; ("200 a~use%201example%0A.com", "get a%7euse%201example%0A.com")
     ; ("500 not implemented", "put abuse@example.com")
     ; ("200 ok", "health")
-    ; ("500 malformed request", "something else")
+    ; ("500 not implemented", "something else")
     ]
   in
   let expected =

@@ -94,3 +94,7 @@ module Server: module type of Server
 
 module Init: module type of Init
 (** Init process for running in Docker *)
+
+module Mapper_lwt: sig
+  val handle: rule -> 'a -> Lwt_io.input_channel * Lwt_io.output_channel -> unit Lwt.t
+end

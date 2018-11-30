@@ -4,6 +4,7 @@
  ((name mapper)
   (libraries (sexplib str cmdliner unix
               mparser
+              lwt lwt.unix
               fmt fmt.cli fmt.tty
               logs logs.cli logs.fmt))
   (public_name mapper)))

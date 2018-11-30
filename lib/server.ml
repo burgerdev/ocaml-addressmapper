@@ -9,10 +9,10 @@ let percent_encoding_re = Str.regexp "%\\([0-9a-fA-F][0-9a-fA-F]\\)"
 
 let percent_decode =
   Str.global_substitute percent_encoding_re @@ fun x ->
-    Str.replace_matched "0x\\1" x
-    |> int_of_string
-    |> char_of_int
-    |> String.make 1
+  Str.replace_matched "0x\\1" x
+  |> int_of_string
+  |> char_of_int
+  |> String.make 1
 
 let percent_encode s =
   begin
@@ -31,6 +31,7 @@ type request =
   | Get of string
   | Put of string
   | Health
+  | Other of string
 
 let get = string "get" <|> string "GET"
 let put = string "put" <|> string "PUT"
@@ -46,18 +47,21 @@ let put_req = put >> spaces >> many_chars any_char
 
 let health_req = health >>$ Health
 
-let request_parser = get_req <|> put_req <|> health_req
+let other_req = many any_char |>> List.to_seq |>> String.of_seq |>> fun s -> Other s
+
+let request_parser = get_req <|> put_req <|> health_req <|> other_req
 
 
 let request_of_string line =
   match parse_string request_parser line () with
-  | Success req -> Ok req
-  | Failed _ -> Error line
+  | Success req -> req
+  | Failed (x, _) -> Other x
 
 let pp_request = Fmt.hbox @@ Fmt.of_to_string @@ function
   | Get s -> "get " ^ s
   | Put s -> "put " ^ s
   | Health -> "health"
+  | Other s -> s
 
 type response =
   | Malformed
@@ -107,7 +111,7 @@ let handle_request handler =
         Logs.err (fun m -> m "@[<v2>health check - error:@,@[<hov2>%a@]@]" Fmt.exn e);
         Unhealthy
     end
-  | Put _ as r ->
+  | Put _ | Other _ as r ->
     Logs.info (fun m -> m "@[<v2>unsupported request:@,%a@]" pp_request r);
     Unsupported
   | Get input ->
@@ -129,13 +133,6 @@ let handle_request handler =
 
 let serve ppf handler stream =
   let f line =
-    request_of_string line |> begin function
-    | Error s ->
-      Logs.info (fun m -> m "@[<v2>invalid request:@,@[<h>%s@]@]" s);
-      Malformed
-    | Ok r -> handle_request handler r
-    end
-    |> pp_response ppf;
+    request_of_string line |> handle_request handler |> pp_response ppf;
     Format.pp_print_newline ppf ()
-
   in Stream.iter f stream

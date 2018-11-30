@@ -8,14 +8,15 @@ type 'a handler = Handler of (unit -> 'a) * ('a -> string -> string option) * 'a
 (** Type of requests that the server anticipates. The only request that is
     expected to come from postfix is [Get s], [Put s] is specified but neither
     implemented in postfix nor here and [Health] is used to check the server's
-    status. *)
+    status. Every other incoming request is wrapped in an [Other]. *)
 type request =
   | Get of string
   | Put of string
   | Health
+  | Other of string
 
 
-val request_of_string: string -> (request, string) result
+val request_of_string: string -> request
 (** [request_of_string req] tries to parse the string [req] according to the
     grammar defined in the
     {{: http://www.postfix.org/tcp_table.5.html } postfix manual }. *)
