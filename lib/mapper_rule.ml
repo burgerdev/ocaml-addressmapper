@@ -30,6 +30,8 @@ let pp = fun ppf rule -> Option.(default Fmt.nop (label rule)) ppf ()
 
 let pp_rule = pp
 
+let to_string rule = Fmt.strf "%a" pp rule
+
 let create_pp pp mapper = Rule (pp, mapper)
 
 let create name mapper = create_pp (Some Fmt.(const string name)) mapper

@@ -18,3 +18,5 @@ val invert: t -> t
 
 val pp: t Fmt.t
 val pp_rule: t Fmt.t
+
+val to_string: t -> string
