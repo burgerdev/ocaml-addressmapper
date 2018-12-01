@@ -17,6 +17,6 @@ clean:
 	$(dune) clean
 
 fetch_deps:
-	opam install -y ocamlfind odoc ounit sexplib mparser cmdliner logs fmt dune
+	opam install -y odoc ounit sexplib mparser cmdliner logs fmt dune lwt
 
 .PHONY: build all test doc clean fetch_deps

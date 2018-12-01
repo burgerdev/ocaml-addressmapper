@@ -16,5 +16,3 @@ _build
 benchmark
 Dockerfile
 doc
-Makefile
-

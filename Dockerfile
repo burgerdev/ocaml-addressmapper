@@ -1,14 +1,12 @@
-FROM ocaml/opam2:alpine-3.8-ocaml-4.06 AS build
+FROM ocaml/opam2:alpine-3.8-ocaml-4.07 AS build
 
 RUN sudo apk --no-cache add m4 ncurses
-
-RUN opam update && opam install -y ocamlfind odoc ounit sexplib cmdliner logs fmt jbuilder mparser
 
 ADD --chown=opam:nogroup . /src
 
 WORKDIR /src
 
-RUN eval `opam config env` && jbuilder build
+RUN make fetch_deps build
 
 FROM alpine
 

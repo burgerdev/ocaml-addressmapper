@@ -13,7 +13,7 @@ build: [
   ["dune" "runtest" "-p" name "-j" jobs] {with-test}
 ]
 depends: [
-  "ocaml" { >= "4.06.0" }
+  "ocaml" { >= "4.07.0" }
   "ounit" {with-test}
-  "sexplib" "mparser" "cmdliner" "logs" "fmt" "dune"
+  "sexplib" "mparser" "cmdliner" "logs" "fmt" "dune" "lwt"
 ]
