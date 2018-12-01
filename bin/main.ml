@@ -1,5 +1,3 @@
-open Unix
-
 let bin_name = "address-mapping-server"
 let bin_version = "0.9"
 
