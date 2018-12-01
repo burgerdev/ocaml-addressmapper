@@ -10,13 +10,13 @@ jobs:
         command: sudo apk add --no-cache m4 ncurses
     - checkout
     - run:
-        name: "opam-install"
-        command: opam install --with-test .
+        name: "fetch_deps"
+        command: make fetch_deps
     - run:
-        name: "make"
+        name: "build"
         command: make
     - run:
-        name: "make test"
+        name: "test"
         command: make test
 workflows:
   version: 2
