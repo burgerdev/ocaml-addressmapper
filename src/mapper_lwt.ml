@@ -112,10 +112,19 @@ let handle_request rule =
 type handler = Lwt_unix.sockaddr -> Lwt_io.input_channel * Lwt_io.output_channel -> unit Lwt.t
 
 
+let read_lines ic = Lwt_stream.from @@ fun _ ->
+  let line_opt = Lwt_io.read_line_opt ic in
+  (* "Send and receive operations must complete in 100 seconds." *)
+  let max_wait = Lwt_unix.sleep 100. >|= fun _ -> None in
+  Lwt.pick [line_opt; max_wait]
+
 let handler_of_rule rule = fun _peer (ic, oc) ->
-  Lwt_io.read_line ic
+  read_lines ic
+  |> Lwt_stream.iter_s @@ fun line ->
+  return line
   >|= Request.request_of_string
   >>= handle_request rule
+  (* TODO: the response should probably be converted to string directly *)
   >|= Fmt.strf "%a" Response.pp
   >>= Lwt_io.fprintl oc
   >>= fun _ -> Lwt_io.flush oc
