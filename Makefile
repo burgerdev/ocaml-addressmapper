@@ -1,5 +1,7 @@
 
-jbuilder=opam exec jbuilder
+SHELL=/bin/bash
+
+jbuilder=opam exec dune
 
 all: build
 
@@ -8,7 +10,7 @@ build:
 
 test: build
 	$(jbuilder) runtest
-	/bin/sh ./test/test-binary.sh
+	$(SHELL) ./test/test-binary.sh
 
 doc:
 	$(jbuilder) build @doc
@@ -21,6 +23,6 @@ clean:
 	$(jbuilder) clean
 
 fetch_deps:
-	opam install -y ocamlfind odoc ounit sexplib mparser cmdliner logs fmt jbuilder
+	opam install -y ocamlfind odoc ounit sexplib mparser cmdliner logs fmt dune
 
 .PHONY: build all test doc benchmark clean fetch_deps

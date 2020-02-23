@@ -1,9 +1,0 @@
-(jbuild_version 1)
-
-(library
- ((name mapper)
-  (libraries (sexplib str cmdliner unix
-              mparser
-              fmt fmt.cli fmt.tty
-              logs logs.cli logs.fmt))
-  (public_name mapper)))
